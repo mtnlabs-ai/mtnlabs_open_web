@@ -104,6 +104,39 @@
       font-size: 0.8rem; color: #94a3b8; white-space: nowrap; margin-top: 2px;
     }
 
+    /* ── Data sources ticker ── */
+    .sources-bar {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 4;
+      overflow: hidden; pointer-events: none;
+      background: linear-gradient(to top, rgba(8,15,28,0.95) 0%, rgba(8,15,28,0.6) 60%, transparent 100%);
+      padding: 1.5rem 0 1rem;
+    }
+    .sources-label {
+      text-align: center; font-size: 0.65rem; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: rgba(148,163,184,0.5); margin-bottom: 0.6rem;
+    }
+    .sources-track {
+      display: flex; gap: 2.5rem; animation: ticker 25s linear infinite;
+      width: max-content;
+    }
+    .sources-track:hover { animation-play-state: paused; }
+    .source-item {
+      display: flex; align-items: center; gap: 0.4rem;
+      white-space: nowrap; font-size: 0.78rem; font-weight: 500;
+      color: rgba(148,163,184,0.6);
+      transition: color 0.3s;
+    }
+    .source-item:hover { color: rgba(203,213,225,0.9); }
+    .source-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: rgba(34,211,238,0.4);
+    }
+    @keyframes ticker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
     .features {
       padding: 5rem 2rem 6rem; max-width: 1100px; margin: 0 auto;
     }
@@ -160,6 +193,32 @@
   <div class="wp-hud" id="wp2"><div class="wp-hud-dot"></div><div class="wp-hud-title">Terrain analysis</div><div class="wp-hud-sub">Slope & avalanche</div></div>
   <div class="wp-hud" id="wp3"><div class="wp-hud-dot"></div><div class="wp-hud-title">Analyze your trip</div><div class="wp-hud-sub">Post-trip route review</div></div>
   <div class="wp-hud" id="wp4"><div class="wp-hud-dot"></div><div class="wp-hud-title">Ready to go</div><div class="wp-hud-sub">Export & navigate</div></div>
+  <div class="sources-bar">
+    <div class="sources-label">Powered by open data from</div>
+    <div class="sources-track">
+      <span class="source-item"><span class="source-dot"></span>OpenStreetMap</span>
+      <span class="source-item"><span class="source-dot"></span>Kartverket</span>
+      <span class="source-item"><span class="source-dot"></span>DNT / Turbasen</span>
+      <span class="source-item"><span class="source-dot"></span>Statskog</span>
+      <span class="source-item"><span class="source-dot"></span>NVE</span>
+      <span class="source-item"><span class="source-dot"></span>Varsom.no</span>
+      <span class="source-item"><span class="source-dot"></span>Meteorologisk Institutt</span>
+      <span class="source-item"><span class="source-dot"></span>ECMWF</span>
+      <span class="source-item"><span class="source-dot"></span>Entur</span>
+      <span class="source-item"><span class="source-dot"></span>Copernicus</span>
+      <!-- Duplicate for seamless loop -->
+      <span class="source-item"><span class="source-dot"></span>OpenStreetMap</span>
+      <span class="source-item"><span class="source-dot"></span>Kartverket</span>
+      <span class="source-item"><span class="source-dot"></span>DNT / Turbasen</span>
+      <span class="source-item"><span class="source-dot"></span>Statskog</span>
+      <span class="source-item"><span class="source-dot"></span>NVE</span>
+      <span class="source-item"><span class="source-dot"></span>Varsom.no</span>
+      <span class="source-item"><span class="source-dot"></span>Meteorologisk Institutt</span>
+      <span class="source-item"><span class="source-dot"></span>ECMWF</span>
+      <span class="source-item"><span class="source-dot"></span>Entur</span>
+      <span class="source-item"><span class="source-dot"></span>Copernicus</span>
+    </div>
+  </div>
 </section>
 
 <section class="features">
