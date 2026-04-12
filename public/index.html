@@ -602,18 +602,107 @@ const DEMO_DRAW_TIME = 1.5;  // seconds to draw the route
 const DEMO_HOLD_TIME = 1.5;  // seconds to hold fully visible
 const DEMO_FADE_TIME = 1.0;  // seconds to fade out
 
+// ── Map layers demo (waypoint 2: "Rich map intelligence") ──
+const layersGroup = new THREE.Group();
+layersGroup.visible = false;
+scene.add(layersGroup);
+
+// Get wp2 position (35% of route)
+const wp1Pos = routeCurve.getPoint(0.35);
+
+// Layer overlays: colored semi-transparent patches on the terrain
+const layerDefs = [
+  { name: 'Avalanche zones', color: 0xff4444, opacity: 0.25, dx: -2, dz: -1, size: 5 },
+  { name: 'Weather grid', color: 0x44aaff, opacity: 0.15, dx: 1, dz: 2, size: 6 },
+  { name: 'Slope analysis', color: 0xffaa22, opacity: 0.20, dx: -1, dz: 1.5, size: 4 },
+  { name: 'Infrastructure', color: 0x88ff88, opacity: 0.18, dx: 2.5, dz: -0.5, size: 3 },
+];
+
+const layerMeshes = layerDefs.map((def) => {
+  // Create a terrain-conforming patch
+  const res = 30;
+  const geo = new THREE.PlaneGeometry(def.size, def.size, res, res);
+  geo.rotateX(-Math.PI / 2);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const lx = pos.getX(i) + wp1Pos.x + def.dx;
+    const lz = pos.getZ(i) + wp1Pos.z + def.dz;
+    pos.setX(i, lx);
+    pos.setZ(i, lz);
+    pos.setY(i, terrain(lx, lz) + 0.08);
+  }
+  geo.computeVertexNormals();
+  const mat = new THREE.MeshBasicMaterial({
+    color: def.color,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  layersGroup.add(mesh);
+  return { mesh, mat, targetOpacity: def.opacity, name: def.name };
+});
+
+// Small floating labels for each layer
+const layerLabels = layerDefs.map((def, i) => {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 96;
+  const ctx = c.getContext('2d');
+  // Background
+  ctx.fillStyle = 'rgba(8,15,28,0.8)';
+  const r = 16;
+  ctx.beginPath();
+  ctx.moveTo(r, 0); ctx.lineTo(512-r, 0); ctx.arcTo(512, 0, 512, r, r);
+  ctx.lineTo(512, 96-r); ctx.arcTo(512, 96, 512-r, 96, r);
+  ctx.lineTo(r, 96); ctx.arcTo(0, 96, 0, 96-r, r);
+  ctx.lineTo(0, r); ctx.arcTo(0, 0, r, 0, r);
+  ctx.closePath(); ctx.fill();
+  // Colored dot
+  const color = new THREE.Color(def.color);
+  ctx.fillStyle = `rgb(${Math.round(color.r*255)},${Math.round(color.g*255)},${Math.round(color.b*255)})`;
+  ctx.shadowColor = ctx.fillStyle;
+  ctx.shadowBlur = 8;
+  ctx.beginPath(); ctx.arc(36, 48, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+  // Text
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '500 34px Inter, sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(def.name, 60, 50);
+
+  const tex = new THREE.CanvasTexture(c);
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthTest: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(1.6, 0.3, 1);
+  sprite.position.set(
+    wp1Pos.x + def.dx,
+    terrain(wp1Pos.x + def.dx, wp1Pos.z + def.dz) + 1.8 + i * 0.5,
+    wp1Pos.z + def.dz
+  );
+  sprite.renderOrder = 998;
+  layersGroup.add(sprite);
+  return { sprite, mat };
+});
+
+let layersState = 'waiting';
+let layersTimer = 0;
+const LAYERS_STAGGER = 0.4;  // seconds between each layer appearing
+const LAYERS_HOLD = 1.0;     // seconds all layers visible together
+const LAYERS_FADE = 0.8;     // seconds to fade out
+
 // ── Waypoints (as 3D sprites) ──
 const wpFracs = [0.15, 0.35, 0.55, 0.75, 0.90];
 const wpLabels = [
   '"Tur over Besseggen"',
-  'AI finds your route',
+  'Rich map intelligence',
   'Navigate in the field',
   'Analyze your trip',
   'Share with friends',
 ];
 const wpSubs = [
   'Just describe what you want',
-  'Trail-matched, terrain-aware',
+  'Avalanche · Weather · Terrain · Infrastructure',
   'Offline maps & GPS tracking',
   'Elevation, pace & conditions',
   'Collaborate on adventures',
@@ -888,6 +977,56 @@ function animate() {
     demoGlowMat.opacity = lineOpacity * 0.3;
     geiloSprite.mat.opacity = labelOpacity;
     kraekjaSprite.mat.opacity = labelOpacity;
+  }
+
+  // ── Map layers animation (during second waypoint dwell) ──
+  // Second dwell starts at MOVE + DWELL + MOVE = 9s into route
+  const secondDwellStart = MOVE + DWELL + MOVE;
+
+  if (layersState === 'waiting' && routeElapsed >= secondDwellStart) {
+    layersState = 'staggering';
+    layersTimer = 0;
+    layersGroup.visible = true;
+  }
+
+  if (layersState !== 'waiting' && layersState !== 'done') {
+    layersTimer += 0.016;
+
+    if (layersState === 'staggering') {
+      // Stagger each layer in one by one
+      const totalStagger = layerMeshes.length * LAYERS_STAGGER;
+      for (let i = 0; i < layerMeshes.length; i++) {
+        const layerStart = i * LAYERS_STAGGER;
+        const t = Math.max(0, Math.min(1, (layersTimer - layerStart) / 0.5));
+        const eased = t * t * (3 - 2 * t); // smoothstep
+        layerMeshes[i].mat.opacity = eased * layerMeshes[i].targetOpacity;
+        layerLabels[i].mat.opacity = eased;
+      }
+      if (layersTimer >= totalStagger + 0.3) {
+        layersState = 'holding';
+        layersTimer = 0;
+      }
+    } else if (layersState === 'holding') {
+      // Subtle pulse on the layers
+      for (let i = 0; i < layerMeshes.length; i++) {
+        const pulse = 1 + 0.15 * Math.sin(elapsed * 2 + i * 1.5);
+        layerMeshes[i].mat.opacity = layerMeshes[i].targetOpacity * pulse;
+      }
+      if (layersTimer >= LAYERS_HOLD) {
+        layersState = 'fading';
+        layersTimer = 0;
+      }
+    } else if (layersState === 'fading') {
+      const t = Math.min(layersTimer / LAYERS_FADE, 1);
+      for (let i = 0; i < layerMeshes.length; i++) {
+        layerMeshes[i].mat.opacity = layerMeshes[i].targetOpacity * (1 - t);
+        layerLabels[i].mat.opacity = 1 - t;
+      }
+      if (t >= 1) {
+        layersState = 'done';
+        layersGroup.visible = false;
+      }
+    }
   }
 
   // Subtle ambient rotation when route is done
