@@ -391,23 +391,76 @@ for (let i = 0; i < TRAIL_COUNT; i++) {
 let prevHeadPos = null;
 let trailTimer = 0;
 
-// ── Waypoints ──
+// ── Waypoints (as 3D sprites) ──
 const wpFracs = [0.08, 0.28, 0.50, 0.72, 0.92];
-const wpEls = wpFracs.map((_, i) => document.getElementById('wp' + i));
+const wpLabels = [
+  'DESCRIBE YOUR TRIP', 'DISCOVER ROUTES', 'NAVIGATE',
+  'ANALYZE YOUR TRIP', 'SHARE & COLLABORATE',
+];
+const wpSubs = [
+  'Natural language AI', 'Trail-matched suggestions', 'Mobile app for the field',
+  'Post-trip route review', 'Routes & trips with friends',
+];
 
-function projectToScreen(pos3d, cam, w, h) {
-  // Check if point is behind camera using dot product
-  const camDir = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
-  const toPoint = pos3d.clone().sub(cam.position);
-  const behind = toPoint.dot(camDir) < 0;
+function makeTextSprite(title, subtitle) {
+  const canvas = document.createElement('canvas');
+  const sz = 512;
+  canvas.width = sz;
+  canvas.height = 160;
+  const ctx = canvas.getContext('2d');
 
-  const v = pos3d.clone().project(cam);
-  return {
-    x: (v.x * 0.5 + 0.5) * w,
-    y: (-v.y * 0.5 + 0.5) * h,
-    behind,
-  };
+  // Background pill
+  const pad = 16;
+  ctx.fillStyle = 'rgba(8, 15, 28, 0.85)';
+  ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(pad, pad, sz - pad * 2, 128, 14);
+  ctx.fill();
+  ctx.stroke();
+
+  // Dot
+  ctx.fillStyle = '#22d3ee';
+  ctx.shadowColor = '#22d3ee';
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.arc(sz / 2, 40, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Title
+  ctx.fillStyle = '#22d3ee';
+  ctx.font = '600 22px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, sz / 2, 80);
+
+  // Subtitle
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '400 18px Inter, sans-serif';
+  ctx.fillText(subtitle, sz / 2, 110);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  const mat = new THREE.SpriteMaterial({
+    map: tex, transparent: true, opacity: 0,
+    depthTest: false, depthWrite: false,
+  });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(4, 1.25, 1);
+  return { sprite, mat };
 }
+
+const wpSprites = wpFracs.map((frac, i) => {
+  const { sprite, mat } = makeTextSprite(wpLabels[i], wpSubs[i]);
+  const pos = routeCurve.getPoint(frac);
+  sprite.position.set(pos.x, pos.y + 2.0, pos.z);
+  sprite.visible = false;
+  scene.add(sprite);
+  return { sprite, mat, frac, targetOpacity: 0 };
+});
+
+// Hide the HTML waypoints (using sprites instead)
+document.querySelectorAll('.wp-hud').forEach(el => el.style.display = 'none');
 
 // ── Resize ──
 function onResize() {
@@ -437,10 +490,11 @@ function animate() {
   // Update route line
   if (progress > 0) updateRouteLine(progress);
 
-  // Head position + layered effects
-  const headPos = routeCurve.getPoint(Math.min(progress, 0.999));
-  headGroup.position.copy(headPos);
+  // Head position + layered effects (smoothed to avoid terrain jitter)
+  const rawHeadPos = routeCurve.getPoint(Math.min(progress, 0.999));
+  headGroup.position.lerp(rawHeadPos, 0.12); // smooth out terrain noise
   headGroup.visible = progress > 0.001 && progress < 0.995;
+  const headPos = headGroup.position;
 
   // Pulse core
   const pulse = 1 + 0.2 * Math.sin(elapsed * 3.5);
@@ -451,11 +505,12 @@ function animate() {
   auraMesh.scale.setScalar(auraPulse);
   auraMat.opacity = 0.15 + 0.15 * Math.sin(elapsed * 2.2);
 
-  // Ring ripple — always face camera
+  // Ring ripple — always face camera, slower pulse
   ringMesh.lookAt(camera.position);
-  const ringPulse = ((elapsed * 1.5) % 1);
-  ringMesh.scale.setScalar(1 + ringPulse * 2);
-  ringMat.opacity = 0.2 * (1 - ringPulse);
+  const ringPulse = ((elapsed * 0.5) % 1); // much slower
+  ringMesh.scale.setScalar(1 + ringPulse * 1.5);
+  ringMat.opacity = 0.12 * (1 - ringPulse);
+  ringMesh.position.y = 0.3; // float above terrain to avoid z-fighting
 
   // Trail particles
   trailTimer += 0.016;
@@ -495,33 +550,20 @@ function animate() {
 
   const targetCamPos = headPos.clone().add(camOffset);
 
-  // Smooth camera (faster lerp for responsive following)
-  camera.position.lerp(targetCamPos, 0.04);
+  // Smooth camera
+  camera.position.lerp(targetCamPos, 0.03);
   const camTarget = camLookAt.clone().add(new THREE.Vector3(0, 0.5, 0));
   camera.lookAt(camTarget);
 
-  // Waypoint HUD labels — update position every frame
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  for (let i = 0; i < wpFracs.length; i++) {
-    const el = wpEls[i];
-    if (!el) continue;
-    const visible = progress >= wpFracs[i];
-    if (visible) {
-      el.classList.add('visible');
+  // Waypoint sprites — fade in as route reaches them
+  for (const wp of wpSprites) {
+    if (progress >= wp.frac) {
+      wp.targetOpacity = 1;
+      wp.sprite.visible = true;
     }
-    // Always update position for visible labels so they track with the camera
-    if (el.classList.contains('visible')) {
-      const wp3d = routeCurve.getPoint(wpFracs[i]);
-      wp3d.y += 1.2; // float above the terrain
-      const screen = projectToScreen(wp3d, camera, w, h);
-      if (!screen.behind && screen.x > 0 && screen.x < w && screen.y > 0 && screen.y < h) {
-        el.style.left = screen.x + 'px';
-        el.style.top = screen.y + 'px';
-        el.style.display = '';
-      } else {
-        el.style.display = 'none';
-      }
-    }
+    // Smooth fade
+    wp.mat.opacity += (wp.targetOpacity - wp.mat.opacity) * 0.03;
+    if (wp.mat.opacity < 0.01) wp.sprite.visible = false;
   }
 
   // Subtle ambient rotation when route is done
