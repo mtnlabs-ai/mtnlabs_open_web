@@ -23,7 +23,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', -apple-system, sans-serif;
-      background: #060a14;
+      background: #080f1c;
       color: #e2e8f0;
       overflow-x: hidden;
     }
@@ -115,12 +115,14 @@
       display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;
     }
     .feature-card {
-      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
       border-radius: 14px; padding: 1.75rem; transition: all 0.3s ease;
+      box-shadow: 0 4px 16px rgba(2,6,23,0.3);
     }
     .feature-card:hover {
-      background: rgba(255,255,255,0.05); border-color: rgba(34,211,238,0.15);
+      background: rgba(34,211,238,0.06); border-color: rgba(34,211,238,0.25);
       transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(34,211,238,0.08);
     }
     .feature-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
     .feature-card p { font-size: 0.88rem; color: #64748b; line-height: 1.6; }
@@ -204,10 +206,10 @@ function terrain(x, z) {
 const canvas = document.getElementById('hero-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setClearColor(0x040810);
+renderer.setClearColor(0x080f1c);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x040810, 0.012);
+scene.fog = new THREE.FogExp2(0x080f1c, 0.012);
 const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
 
 // ── Terrain mesh ──
@@ -347,19 +349,64 @@ function updateRouteLine(progress) {
   scene.add(routeLine);
 }
 
-// Route head (glowing sphere)
-const headGeo = new THREE.SphereGeometry(0.15, 12, 12);
-const headMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
-const headMesh = new THREE.Mesh(headGeo, headMat);
-scene.add(headMesh);
+// ── Route head: layered glow dot ──
+const headGroup = new THREE.Group();
+scene.add(headGroup);
+
+// Core dot
+const coreMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
+const coreMesh = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), coreMat);
+headGroup.add(coreMesh);
+
+// Inner aura (pulsing)
+const auraMat = new THREE.MeshBasicMaterial({
+  color: 0x22d3ee, transparent: true, opacity: 0.3,
+  depthWrite: false,
+});
+const auraMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), auraMat);
+headGroup.add(auraMesh);
+
+// Outer ring (ripple)
+const ringGeo = new THREE.RingGeometry(0.35, 0.4, 32);
+const ringMat = new THREE.MeshBasicMaterial({
+  color: 0x22d3ee, transparent: true, opacity: 0.15,
+  side: THREE.DoubleSide, depthWrite: false,
+});
+const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+headGroup.add(ringMesh);
+
+// Trail particles
+const TRAIL_COUNT = 30;
+const trailParticles = [];
+const trailGeo = new THREE.SphereGeometry(0.04, 6, 6);
+for (let i = 0; i < TRAIL_COUNT; i++) {
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0x22d3ee, transparent: true, opacity: 0,
+  });
+  const mesh = new THREE.Mesh(trailGeo, mat);
+  mesh.visible = false;
+  scene.add(mesh);
+  trailParticles.push({ mesh, mat, life: 0, maxLife: 0 });
+}
+let prevHeadPos = null;
+let trailTimer = 0;
 
 // ── Waypoints ──
 const wpFracs = [0.08, 0.28, 0.50, 0.72, 0.92];
 const wpEls = wpFracs.map((_, i) => document.getElementById('wp' + i));
 
 function projectToScreen(pos3d, cam, w, h) {
+  // Check if point is behind camera using dot product
+  const camDir = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
+  const toPoint = pos3d.clone().sub(cam.position);
+  const behind = toPoint.dot(camDir) < 0;
+
   const v = pos3d.clone().project(cam);
-  return { x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, behind: v.z > 1 };
+  return {
+    x: (v.x * 0.5 + 0.5) * w,
+    y: (-v.y * 0.5 + 0.5) * h,
+    behind,
+  };
 }
 
 // ── Resize ──
@@ -390,13 +437,52 @@ function animate() {
   // Update route line
   if (progress > 0) updateRouteLine(progress);
 
-  // Head position
+  // Head position + layered effects
   const headPos = routeCurve.getPoint(Math.min(progress, 0.999));
-  headMesh.position.copy(headPos);
-  headMesh.visible = progress > 0 && progress < 1;
-  // Pulse
-  const pulse = 1 + 0.15 * Math.sin(elapsed * 4);
-  headMesh.scale.setScalar(pulse);
+  headGroup.position.copy(headPos);
+  headGroup.visible = progress > 0.001 && progress < 0.995;
+
+  // Pulse core
+  const pulse = 1 + 0.2 * Math.sin(elapsed * 3.5);
+  coreMesh.scale.setScalar(pulse);
+
+  // Aura breathing
+  const auraPulse = 1 + 0.4 * Math.sin(elapsed * 2.2);
+  auraMesh.scale.setScalar(auraPulse);
+  auraMat.opacity = 0.15 + 0.15 * Math.sin(elapsed * 2.2);
+
+  // Ring ripple — always face camera
+  ringMesh.lookAt(camera.position);
+  const ringPulse = ((elapsed * 1.5) % 1);
+  ringMesh.scale.setScalar(1 + ringPulse * 2);
+  ringMat.opacity = 0.2 * (1 - ringPulse);
+
+  // Trail particles
+  trailTimer += 0.016;
+  if (trailTimer > 0.05 && progress > 0.001 && progress < 0.995) {
+    trailTimer = 0;
+    // Find an inactive particle
+    for (const tp of trailParticles) {
+      if (tp.life <= 0) {
+        tp.mesh.position.copy(headPos);
+        tp.mesh.position.x += (Math.random() - 0.5) * 0.1;
+        tp.mesh.position.z += (Math.random() - 0.5) * 0.1;
+        tp.mesh.visible = true;
+        tp.life = 1;
+        tp.maxLife = 0.6 + Math.random() * 0.4;
+        break;
+      }
+    }
+  }
+  for (const tp of trailParticles) {
+    if (tp.life > 0) {
+      tp.life -= 0.016 / tp.maxLife;
+      tp.mesh.position.y += 0.008;
+      tp.mat.opacity = Math.max(0, tp.life * 0.4);
+      tp.mesh.scale.setScalar(0.5 + (1 - tp.life) * 0.5);
+      if (tp.life <= 0) tp.mesh.visible = false;
+    }
+  }
 
   // Camera: follow from above and behind the route head
   const camLookAt = headPos.clone();
