@@ -321,9 +321,9 @@ function buildContourLines() {
 
     // Every 5th contour is a "major" contour (brighter)
     const isMajor = Math.abs(Math.round(h / interval) % 5) === 0;
-    const opacity = isMajor ? 0.45 : 0.20;
+    const opacity = isMajor ? 0.25 : 0.10;
     const lineWidth = 1;
-    const color = new THREE.Color(0.25, 0.65, 1.0);
+    const color = new THREE.Color(0.2, 0.55, 0.9);
 
     for (const chain of chains) {
       const pts = chain.map(([x, z]) => new THREE.Vector3(x, h + 0.03, z));
@@ -401,14 +401,7 @@ const auraMat = new THREE.MeshBasicMaterial({
 const auraMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), auraMat);
 headGroup.add(auraMesh);
 
-// Outer ring (ripple)
-const ringGeo = new THREE.RingGeometry(0.35, 0.4, 32);
-const ringMat = new THREE.MeshBasicMaterial({
-  color: 0x22d3ee, transparent: true, opacity: 0.15,
-  side: THREE.DoubleSide, depthWrite: false,
-});
-const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-headGroup.add(ringMesh);
+// (ring pulse removed — keeping core + aura + trail only)
 
 // Trail particles
 const TRAIL_COUNT = 30;
@@ -445,24 +438,24 @@ const wpSubs = [
 
 function makeTextSprite(title, subtitle) {
   const canvas = document.createElement('canvas');
-  const sz = 512;
+  const sz = 1024; // high-res for sharp text
   canvas.width = sz;
-  canvas.height = 160;
+  canvas.height = 320;
   const ctx = canvas.getContext('2d');
 
-  // Background pill (manual rounded rect for compatibility)
-  const pad = 16, w = sz - pad * 2, h = 128, r = 14;
-  ctx.fillStyle = 'rgba(8, 15, 28, 0.85)';
-  ctx.strokeStyle = 'rgba(34, 211, 238, 0.4)';
-  ctx.lineWidth = 3;
+  // Background pill
+  const pad = 32, bw = sz - pad * 2, bh = 256, r = 28;
+  ctx.fillStyle = 'rgba(8, 15, 28, 0.88)';
+  ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
+  ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.moveTo(pad + r, pad);
-  ctx.lineTo(pad + w - r, pad);
-  ctx.arcTo(pad + w, pad, pad + w, pad + r, r);
-  ctx.lineTo(pad + w, pad + h - r);
-  ctx.arcTo(pad + w, pad + h, pad + w - r, pad + h, r);
-  ctx.lineTo(pad + r, pad + h);
-  ctx.arcTo(pad, pad + h, pad, pad + h - r, r);
+  ctx.lineTo(pad + bw - r, pad);
+  ctx.arcTo(pad + bw, pad, pad + bw, pad + r, r);
+  ctx.lineTo(pad + bw, pad + bh - r);
+  ctx.arcTo(pad + bw, pad + bh, pad + bw - r, pad + bh, r);
+  ctx.lineTo(pad + r, pad + bh);
+  ctx.arcTo(pad, pad + bh, pad, pad + bh - r, r);
   ctx.lineTo(pad, pad + r);
   ctx.arcTo(pad, pad, pad + r, pad, r);
   ctx.closePath();
@@ -472,22 +465,22 @@ function makeTextSprite(title, subtitle) {
   // Dot
   ctx.fillStyle = '#22d3ee';
   ctx.shadowColor = '#22d3ee';
-  ctx.shadowBlur = 10;
+  ctx.shadowBlur = 16;
   ctx.beginPath();
-  ctx.arc(sz / 2, 40, 5, 0, Math.PI * 2);
+  ctx.arc(sz / 2, 72, 8, 0, Math.PI * 2);
   ctx.fill();
   ctx.shadowBlur = 0;
 
   // Title
   ctx.fillStyle = '#22d3ee';
-  ctx.font = '600 26px Inter, sans-serif';
+  ctx.font = '600 48px Inter, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(title, sz / 2, 78);
+  ctx.fillText(title, sz / 2, 155);
 
   // Subtitle
   ctx.fillStyle = '#94a3b8';
-  ctx.font = '400 20px Inter, sans-serif';
-  ctx.fillText(subtitle, sz / 2, 112);
+  ctx.font = '400 36px Inter, sans-serif';
+  ctx.fillText(subtitle, sz / 2, 215);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.needsUpdate = true;
@@ -596,12 +589,6 @@ function animate() {
   auraMesh.scale.setScalar(auraPulse);
   auraMat.opacity = 0.15 + 0.15 * Math.sin(elapsed * 2.2);
 
-  // Ring ripple — always face camera, slower pulse
-  ringMesh.lookAt(camera.position);
-  const ringPulse = ((elapsed * 0.5) % 1); // much slower
-  ringMesh.scale.setScalar(1 + ringPulse * 1.5);
-  ringMat.opacity = 0.12 * (1 - ringPulse);
-  ringMesh.position.y = 0.3; // float above terrain to avoid z-fighting
 
   // Trail particles
   trailTimer += 0.016;
