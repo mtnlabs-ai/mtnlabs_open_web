@@ -484,6 +484,91 @@ for (let i = 0; i < TRAIL_COUNT; i++) {
 let prevHeadPos = null;
 let trailTimer = 0;
 
+// ── Demo route: "Geilo → Krækkja" shown during first waypoint dwell ──
+const demoRouteGroup = new THREE.Group();
+demoRouteGroup.visible = false;
+scene.add(demoRouteGroup);
+
+// Build a short demo route near the first waypoint position
+const wp0Pos = routeCurve.getPoint(0.15); // first waypoint position
+const DEMO_STEPS = 80;
+const demoPts = [];
+for (let i = 0; i <= DEMO_STEPS; i++) {
+  const t = i / DEMO_STEPS;
+  // Route curves away from waypoint and back, like a real ski tour
+  const dx = t * 8 - 4;
+  const dz = 2.5 * Math.sin(t * Math.PI) + t * 1.5;
+  const x = wp0Pos.x + dx;
+  const z = wp0Pos.z + dz;
+  const y = terrain(x, z) + 0.12;
+  demoPts.push(new THREE.Vector3(x, y, z));
+}
+const demoCurve = new THREE.CatmullRomCurve3(demoPts);
+const demoLinePts = demoCurve.getPoints(120);
+const demoLineGeo = new THREE.BufferGeometry().setFromPoints(demoLinePts);
+const demoLineMat = new THREE.LineBasicMaterial({
+  color: 0x60a5fa, transparent: true, opacity: 0,
+  depthWrite: false,
+});
+demoRouteGroup.add(new THREE.Line(demoLineGeo, demoLineMat));
+
+// Geilo label at start
+const geiloSprite = (() => {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 80;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(8,15,28,0.8)';
+  ctx.strokeStyle = 'rgba(96,165,250,0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(12,4); ctx.lineTo(244,4); ctx.arcTo(252,4,252,12,8);
+  ctx.lineTo(252,68); ctx.arcTo(252,76,244,76,8);
+  ctx.lineTo(12,76); ctx.arcTo(4,76,4,68,8);
+  ctx.lineTo(4,12); ctx.arcTo(4,4,12,4,8); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#60a5fa'; ctx.font = '600 32px Inter,sans-serif';
+  ctx.textAlign = 'center'; ctx.fillText('Geilo', 128, 50);
+  const tex = new THREE.CanvasTexture(c);
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthTest: false });
+  const s = new THREE.Sprite(mat);
+  s.scale.set(1.8, 0.56, 1);
+  s.position.copy(demoPts[0]); s.position.y += 1.0;
+  return { sprite: s, mat };
+})();
+demoRouteGroup.add(geiloSprite.sprite);
+
+// Krækkja label at end
+const kraekjaSprite = (() => {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 80;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(8,15,28,0.8)';
+  ctx.strokeStyle = 'rgba(96,165,250,0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(12,4); ctx.lineTo(244,4); ctx.arcTo(252,4,252,12,8);
+  ctx.lineTo(252,68); ctx.arcTo(252,76,244,76,8);
+  ctx.lineTo(12,76); ctx.arcTo(4,76,4,68,8);
+  ctx.lineTo(4,12); ctx.arcTo(4,4,12,4,8); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#60a5fa'; ctx.font = '600 32px Inter,sans-serif';
+  ctx.textAlign = 'center'; ctx.fillText('Krækkja', 128, 50);
+  const tex = new THREE.CanvasTexture(c);
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthTest: false });
+  const s = new THREE.Sprite(mat);
+  s.scale.set(1.8, 0.56, 1);
+  s.position.copy(demoPts[demoPts.length - 1]); s.position.y += 1.0;
+  return { sprite: s, mat };
+})();
+demoRouteGroup.add(kraekjaSprite.sprite);
+
+// Demo route animation state
+let demoState = 'waiting'; // waiting → drawing → visible → fading → done
+let demoTimer = 0;
+const DEMO_DRAW_TIME = 1.5;  // seconds to draw the route
+const DEMO_HOLD_TIME = 1.5;  // seconds to hold fully visible
+const DEMO_FADE_TIME = 1.0;  // seconds to fade out
+
 // ── Waypoints (as 3D sprites) ──
 const wpFracs = [0.15, 0.35, 0.55, 0.75, 0.90];
 const wpLabels = [
@@ -718,6 +803,54 @@ function animate() {
     // Smooth fade
     wp.mat.opacity += (wp.targetOpacity - wp.mat.opacity) * 0.08; // faster fade-in
     if (wp.mat.opacity < 0.01) wp.sprite.visible = false;
+  }
+
+  // ── Demo route animation (during first waypoint dwell) ──
+  // First dwell starts at MOVE seconds (after first move segment: 0 → 0.15)
+  // and lasts DWELL seconds. We trigger the demo during that window.
+  const firstDwellStart = MOVE; // seconds into the route
+  const firstDwellEnd = MOVE + DWELL;
+  const routeElapsed = Math.max(0, elapsed - ROUTE_DELAY);
+
+  if (demoState === 'waiting' && routeElapsed >= firstDwellStart) {
+    demoState = 'drawing';
+    demoTimer = 0;
+    demoRouteGroup.visible = true;
+  }
+
+  if (demoState !== 'waiting' && demoState !== 'done') {
+    demoTimer += 0.016;
+
+    let lineOpacity = 0;
+    let labelOpacity = 0;
+
+    if (demoState === 'drawing') {
+      const t = Math.min(demoTimer / DEMO_DRAW_TIME, 1);
+      lineOpacity = t * 0.7;
+      labelOpacity = t;
+      // Progressively reveal the line by rebuilding geometry
+      const showPts = Math.max(2, Math.floor(t * demoLinePts.length));
+      const partialGeo = new THREE.BufferGeometry().setFromPoints(demoLinePts.slice(0, showPts));
+      demoRouteGroup.children[0].geometry.dispose();
+      demoRouteGroup.children[0].geometry = partialGeo;
+      if (t >= 1) { demoState = 'visible'; demoTimer = 0; }
+    } else if (demoState === 'visible') {
+      lineOpacity = 0.7;
+      labelOpacity = 1;
+      if (demoTimer >= DEMO_HOLD_TIME) { demoState = 'fading'; demoTimer = 0; }
+    } else if (demoState === 'fading') {
+      const t = Math.min(demoTimer / DEMO_FADE_TIME, 1);
+      lineOpacity = 0.7 * (1 - t);
+      labelOpacity = 1 - t;
+      if (t >= 1) {
+        demoState = 'done';
+        demoRouteGroup.visible = false;
+      }
+    }
+
+    demoLineMat.opacity = lineOpacity;
+    geiloSprite.mat.opacity = labelOpacity;
+    kraekjaSprite.mat.opacity = labelOpacity;
   }
 
   // Subtle ambient rotation when route is done
