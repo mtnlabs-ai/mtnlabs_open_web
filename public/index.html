@@ -394,12 +394,18 @@ let trailTimer = 0;
 // ── Waypoints (as 3D sprites) ──
 const wpFracs = [0.08, 0.28, 0.50, 0.72, 0.92];
 const wpLabels = [
-  'DESCRIBE YOUR TRIP', 'DISCOVER ROUTES', 'NAVIGATE',
-  'ANALYZE YOUR TRIP', 'SHARE & COLLABORATE',
+  '"Finn en skitur fra Geilo"',
+  'AI finds your route',
+  'Navigate in the field',
+  'Analyze your trip',
+  'Share with friends',
 ];
 const wpSubs = [
-  'Natural language AI', 'Trail-matched suggestions', 'Mobile app for the field',
-  'Post-trip route review', 'Routes & trips with friends',
+  'Just describe what you want',
+  'Trail-matched, terrain-aware',
+  'Offline maps & GPS tracking',
+  'Elevation, pace & conditions',
+  'Collaborate on adventures',
 ];
 
 function makeTextSprite(title, subtitle) {
@@ -439,14 +445,14 @@ function makeTextSprite(title, subtitle) {
 
   // Title
   ctx.fillStyle = '#22d3ee';
-  ctx.font = '600 22px Inter, sans-serif';
+  ctx.font = '600 26px Inter, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(title, sz / 2, 80);
+  ctx.fillText(title, sz / 2, 78);
 
   // Subtitle
   ctx.fillStyle = '#94a3b8';
-  ctx.font = '400 18px Inter, sans-serif';
-  ctx.fillText(subtitle, sz / 2, 110);
+  ctx.font = '400 20px Inter, sans-serif';
+  ctx.fillText(subtitle, sz / 2, 112);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.needsUpdate = true;
@@ -455,15 +461,19 @@ function makeTextSprite(title, subtitle) {
     depthTest: false, depthWrite: false,
   });
   const sprite = new THREE.Sprite(mat);
-  sprite.scale.set(5, 1.6, 1);
-  sprite.renderOrder = 999; // render on top of everything
+  // Scale based on viewport — smaller on mobile
+  const isMobile = window.innerWidth < 768;
+  const s = isMobile ? 2.2 : 3.5;
+  sprite.scale.set(s, s * 0.32, 1);
+  sprite.renderOrder = 999;
   return { sprite, mat };
 }
 
 const wpSprites = wpFracs.map((frac, i) => {
   const { sprite, mat } = makeTextSprite(wpLabels[i], wpSubs[i]);
   const pos = routeCurve.getPoint(frac);
-  sprite.position.set(pos.x, pos.y + 2.5, pos.z);
+  const isMobile = window.innerWidth < 768;
+  sprite.position.set(pos.x, pos.y + (isMobile ? 1.5 : 2.2), pos.z);
   sprite.visible = false;
   scene.add(sprite);
   return { sprite, mat, frac, targetOpacity: 0 };
