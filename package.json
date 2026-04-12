@@ -1,10 +1,21 @@
 {
-  "name": "mtnlabs-open-web",
-  "version": "1.0.0",
+  "name": "mtnlabs_open_web",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npx wrangler pages dev dist",
-    "build": "echo 'Static site — no build step needed'",
-    "deploy": "npx wrangler pages deploy dist --project-name mtnlabsai"
+    "dev": "next dev --turbopack",
+    "build": "npx opennextjs-cloudflare build",
+    "deploy": "npx wrangler deploy"
+  },
+  "dependencies": {
+    "next": "^16.1.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@opennextjs/cloudflare": "^1.2.1",
+    "@types/react": "19.2.14",
+    "typescript": "6.0.2",
+    "wrangler": "^4.81.1"
   }
 }
