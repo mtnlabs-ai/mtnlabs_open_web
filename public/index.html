@@ -196,10 +196,29 @@ function fbm(x, y, oct) {
   }
   return v;
 }
+// Lofoten-inspired terrain: sharp ridges rising from flat fjords
 function terrain(x, z) {
-  return 3.5 * fbm(x*0.12, z*0.12, 6)
-       + 1.5 * Math.abs(fbm(x*0.07 + 5, z*0.07 + 3, 4))
-       + 0.8 * Math.max(0, fbm(x*0.05 + 10, z*0.05 + 8, 5));
+  // Base ridge system — sharp peaks along a spine
+  const ridge = Math.abs(fbm(x*0.08 + 1.5, z*0.06, 5));
+  const spine = Math.exp(-0.15 * (z - 2 * Math.sin(x * 0.08)) ** 2); // central ridge line
+
+  // Sharp peaks with steep sides (Lofoten character)
+  const peaks = 4.5 * ridge * (0.3 + 0.7 * spine)
+              + 2.0 * Math.max(0, fbm(x*0.15, z*0.15 + 3, 6)) * spine;
+
+  // Fjord valleys — flat near sea level
+  const fjord = -0.8 + 0.3 * fbm(x*0.04, z*0.04 + 7, 3);
+  const isWater = peaks + fjord < 0.2;
+
+  // Secondary ridges perpendicular to main spine
+  const cross = 1.2 * Math.abs(fbm(x*0.06 + 10, z*0.12 + 5, 4))
+              * Math.max(0, 1 - spine * 0.5);
+
+  // Combine: peaks dominate near spine, fjord flats elsewhere
+  const raw = peaks + cross + fjord;
+
+  // Clamp fjord floor to create flat water surfaces
+  return Math.max(-0.5, raw * 0.9);
 }
 
 // ── Setup ──
@@ -226,11 +245,21 @@ terrainGeo.computeVertexNormals();
 const colors = new Float32Array(pos.count * 3);
 for (let i = 0; i < pos.count; i++) {
   const h = pos.getY(i);
-  // Map height to color: deep valleys dark blue → mid slopes slate → peaks light
-  const t = (h + 3) / 9; // normalize roughly -3..6 to 0..1
-  const r = 0.04 + t * 0.10;
-  const g = 0.06 + t * 0.14;
-  const b = 0.12 + t * 0.18;
+  const t = Math.max(0, Math.min(1, (h + 0.5) / 6)); // normalize
+  let r, g, b;
+  if (h < 0) {
+    // Fjord water — deep dark blue
+    r = 0.03; g = 0.05; b = 0.12;
+  } else if (t < 0.3) {
+    // Lower slopes — dark rocky
+    r = 0.05 + t * 0.1; g = 0.07 + t * 0.12; b = 0.13 + t * 0.15;
+  } else if (t < 0.7) {
+    // Mid slopes — slate blue-grey
+    r = 0.08 + t * 0.08; g = 0.10 + t * 0.10; b = 0.16 + t * 0.12;
+  } else {
+    // High peaks — lighter, hint of snow
+    r = 0.10 + t * 0.12; g = 0.13 + t * 0.14; b = 0.20 + t * 0.12;
+  }
   colors[i * 3] = r;
   colors[i * 3 + 1] = g;
   colors[i * 3 + 2] = b;
@@ -250,8 +279,8 @@ scene.add(terrainMesh);
 function buildContourLines() {
   const halfSize = TERRAIN_SIZE / 2;
   const step = TERRAIN_SIZE / GRID;
-  const minH = -2, maxH = 7;
-  const interval = 0.5; // tighter contour spacing
+  const minH = -0.5, maxH = 7;
+  const interval = 0.4; // tight contour spacing for dramatic relief
   const contourGroup = new THREE.Group();
 
   // Sample terrain into a grid for marching squares
@@ -384,24 +413,37 @@ function updateRouteLine(progress) {
   scene.add(routeLine);
 }
 
-// ── Route head: layered glow dot ──
+// ── Route head: small rolling ball with shadow ──
 const headGroup = new THREE.Group();
 scene.add(headGroup);
 
-// Core dot
-const coreMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
-const coreMesh = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), coreMat);
+// Ball — smaller, with subtle shading for 3D feel
+const coreMat = new THREE.MeshPhongMaterial({
+  color: 0x22d3ee, emissive: 0x0a4a5a,
+  shininess: 80, specular: 0x88ddff,
+});
+const coreMesh = new THREE.Mesh(new THREE.SphereGeometry(0.08, 20, 20), coreMat);
+coreMesh.position.y = 0.12; // float slightly above terrain
 headGroup.add(coreMesh);
 
-// Inner aura (pulsing)
+// Soft glow aura
 const auraMat = new THREE.MeshBasicMaterial({
-  color: 0x22d3ee, transparent: true, opacity: 0.3,
+  color: 0x22d3ee, transparent: true, opacity: 0.2,
   depthWrite: false,
 });
-const auraMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), auraMat);
+const auraMesh = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), auraMat);
+auraMesh.position.y = 0.12;
 headGroup.add(auraMesh);
 
-// (ring pulse removed — keeping core + aura + trail only)
+// Ground shadow (flat circle beneath the ball)
+const shadowMat = new THREE.MeshBasicMaterial({
+  color: 0x000000, transparent: true, opacity: 0.25,
+  depthWrite: false, side: THREE.DoubleSide,
+});
+const shadowMesh = new THREE.Mesh(new THREE.CircleGeometry(0.12, 16), shadowMat);
+shadowMesh.rotation.x = -Math.PI / 2;
+shadowMesh.position.y = 0.02;
+headGroup.add(shadowMesh);
 
 // Trail particles
 const TRAIL_COUNT = 30;
@@ -580,15 +622,26 @@ function animate() {
   headGroup.visible = progress > 0.001 && progress < 0.995;
   const headPos = headGroup.position;
 
-  // Pulse core
-  const pulse = 1 + 0.2 * Math.sin(elapsed * 3.5);
-  coreMesh.scale.setScalar(pulse);
+  // Rolling rotation — rotate based on distance traveled
+  if (prevHeadPos) {
+    const dx = rawHeadPos.x - prevHeadPos.x;
+    const dz = rawHeadPos.z - prevHeadPos.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    // Roll axis perpendicular to movement direction
+    const rollSpeed = dist / 0.08; // radius = 0.08
+    const axis = new THREE.Vector3(-dz, 0, dx).normalize();
+    if (axis.length() > 0.01) {
+      coreMesh.rotateOnWorldAxis(axis, rollSpeed);
+    }
+  }
 
-  // Aura breathing
-  const auraPulse = 1 + 0.4 * Math.sin(elapsed * 2.2);
+  // Subtle aura breathing
+  const auraPulse = 1 + 0.25 * Math.sin(elapsed * 2);
   auraMesh.scale.setScalar(auraPulse);
-  auraMat.opacity = 0.15 + 0.15 * Math.sin(elapsed * 2.2);
+  auraMat.opacity = 0.12 + 0.08 * Math.sin(elapsed * 2);
 
+
+  prevHeadPos = rawHeadPos.clone();
 
   // Trail particles
   trailTimer += 0.016;
