@@ -242,24 +242,23 @@ for (let i = 0; i < pos.count; i++) {
 terrainGeo.computeVertexNormals();
 
 // Terrain material — height-based vertex colors for topo-map look
+// Topo map color bands — muted/dark versions of classic map colors
+function topoColor(h) {
+  // Normalize: fjord ~-0.5, shores ~0, treeline ~2.5, alpine ~4, peaks ~6+
+  if (h < -0.1) return [0.04, 0.08, 0.18];           // fjord water — deep blue
+  if (h < 0.3)  return [0.08, 0.14, 0.07];            // shore/lowland — dark green
+  if (h < 1.2)  return [0.10, 0.18, 0.08];            // forest — muted green
+  if (h < 2.2)  return [0.12, 0.16, 0.07];            // upper forest — olive
+  if (h < 3.0)  return [0.14, 0.14, 0.08];            // treeline — brown-green
+  if (h < 4.0)  return [0.13, 0.12, 0.10];            // alpine — grey-brown
+  if (h < 5.0)  return [0.16, 0.15, 0.14];            // high alpine — light grey
+  return [0.20, 0.20, 0.22];                           // peaks/snow — bright grey-white
+}
+
 const colors = new Float32Array(pos.count * 3);
 for (let i = 0; i < pos.count; i++) {
   const h = pos.getY(i);
-  const t = Math.max(0, Math.min(1, (h + 0.5) / 6)); // normalize
-  let r, g, b;
-  if (h < 0) {
-    // Fjord water — deep dark blue
-    r = 0.03; g = 0.05; b = 0.12;
-  } else if (t < 0.3) {
-    // Lower slopes — dark rocky
-    r = 0.05 + t * 0.1; g = 0.07 + t * 0.12; b = 0.13 + t * 0.15;
-  } else if (t < 0.7) {
-    // Mid slopes — slate blue-grey
-    r = 0.08 + t * 0.08; g = 0.10 + t * 0.10; b = 0.16 + t * 0.12;
-  } else {
-    // High peaks — lighter, hint of snow
-    r = 0.10 + t * 0.12; g = 0.13 + t * 0.14; b = 0.20 + t * 0.12;
-  }
+  const [r, g, b] = topoColor(h);
   colors[i * 3] = r;
   colors[i * 3 + 1] = g;
   colors[i * 3 + 2] = b;
@@ -350,9 +349,12 @@ function buildContourLines() {
 
     // Every 5th contour is a "major" contour (brighter)
     const isMajor = Math.abs(Math.round(h / interval) % 5) === 0;
-    const opacity = isMajor ? 0.25 : 0.10;
+    const opacity = isMajor ? 0.30 : 0.12;
     const lineWidth = 1;
-    const color = new THREE.Color(0.2, 0.55, 0.9);
+    // Brown contours for land, blue for water level
+    const color = h < 0.1
+      ? new THREE.Color(0.15, 0.35, 0.65) // blue for water/shore contours
+      : new THREE.Color(0.45, 0.30, 0.18); // brown for land contours
 
     for (const chain of chains) {
       const pts = chain.map(([x, z]) => new THREE.Vector3(x, h + 0.03, z));
