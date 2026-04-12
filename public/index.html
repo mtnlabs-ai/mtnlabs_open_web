@@ -807,20 +807,150 @@ for (let i = 0; i < 8; i++) {
 let cabinsState = 'waiting';
 let cabinsTimer = 0;
 
+// ── Itinerary demo (waypoint 4: multi-day hut tour) ──
+const itinGroup = new THREE.Group();
+itinGroup.visible = false;
+scene.add(itinGroup);
+
+const wp3Pos = routeCurve.getPoint(0.75);
+
+// Build 3 day-segments as colored route lines with cabin stops between them
+const dayColors = [0x22d3ee, 0x60a5fa, 0xa78bfa]; // cyan → blue → purple
+const dayLabels = ['Dag 1', 'Dag 2', 'Dag 3'];
+const cabinNames = ['Finse', 'Krækkja', 'Geiterygghytta', 'Haugastøl'];
+
+const itinDays = [];
+const itinCabins = [];
+
+for (let d = 0; d < 3; d++) {
+  const pts = [];
+  const steps = 40;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    // Each day goes in a slightly different direction
+    const angle = (d * 2.2) + t * 1.2;
+    const dist = t * 4.5;
+    const x = wp3Pos.x - 3 + d * 3.5 + t * 2;
+    const z = wp3Pos.z - 2 + Math.sin(angle) * dist * 0.4 + d * 1.5;
+    let y = terrain(x, z);
+    y = Math.max(y, 0.4);
+    pts.push(new THREE.Vector3(x, y + 0.1, z));
+  }
+  const curve = new THREE.CatmullRomCurve3(pts);
+  const linePts = curve.getPoints(60);
+  const geo = new THREE.BufferGeometry().setFromPoints(linePts);
+  const mat = new THREE.LineBasicMaterial({
+    color: dayColors[d], transparent: true, opacity: 0,
+    depthWrite: false,
+  });
+  const line = new THREE.Line(geo, mat);
+  itinGroup.add(line);
+
+  // Day label sprite
+  const c = document.createElement('canvas');
+  c.width = 384; c.height = 96;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(8,15,28,0.85)';
+  const r = 14;
+  ctx.beginPath();
+  ctx.moveTo(r,0); ctx.lineTo(384-r,0); ctx.arcTo(384,0,384,r,r);
+  ctx.lineTo(384,96-r); ctx.arcTo(384,96,384-r,96,r);
+  ctx.lineTo(r,96); ctx.arcTo(0,96,0,96-r,r);
+  ctx.lineTo(0,r); ctx.arcTo(0,0,r,0,r); ctx.closePath(); ctx.fill();
+  const col = new THREE.Color(dayColors[d]);
+  ctx.fillStyle = `rgb(${Math.round(col.r*255)},${Math.round(col.g*255)},${Math.round(col.b*255)})`;
+  ctx.font = '600 38px Inter,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(dayLabels[d], 192, 48);
+  const tex = new THREE.CanvasTexture(c);
+  const sMat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthTest: false });
+  const sprite = new THREE.Sprite(sMat);
+  sprite.scale.set(1.2, 0.3, 1);
+  const midPt = linePts[30];
+  sprite.position.set(midPt.x, midPt.y + 1.5, midPt.z);
+  sprite.renderOrder = 998;
+  itinGroup.add(sprite);
+
+  itinDays.push({ line, mat, sprite, sMat, pts: linePts });
+
+  // Cabin marker at the end of each day (except last — gets the final cabin)
+  const cabinPt = linePts[linePts.length - 1];
+  const cabinC = document.createElement('canvas');
+  cabinC.width = 384; cabinC.height = 96;
+  const cCtx = cabinC.getContext('2d');
+  cCtx.fillStyle = 'rgba(8,15,28,0.8)';
+  cCtx.beginPath();
+  cCtx.moveTo(r,0); cCtx.lineTo(384-r,0); cCtx.arcTo(384,0,384,r,r);
+  cCtx.lineTo(384,96-r); cCtx.arcTo(384,96,384-r,96,r);
+  cCtx.lineTo(r,96); cCtx.arcTo(0,96,0,96-r,r);
+  cCtx.lineTo(0,r); cCtx.arcTo(0,0,r,0,r); cCtx.closePath(); cCtx.fill();
+  // Cabin icon (small house shape)
+  cCtx.fillStyle = '#fbbf24';
+  cCtx.beginPath();
+  cCtx.moveTo(22, 60); cCtx.lineTo(32, 40); cCtx.lineTo(42, 60); cCtx.closePath();
+  cCtx.fill();
+  cCtx.fillRect(24, 50, 16, 12);
+  // Name
+  cCtx.fillStyle = '#e2e8f0';
+  cCtx.font = '500 32px Inter,sans-serif';
+  cCtx.textBaseline = 'middle';
+  cCtx.fillText(cabinNames[d + 1], 56, 50);
+  const cabTex = new THREE.CanvasTexture(cabinC);
+  const cabMat = new THREE.SpriteMaterial({ map: cabTex, transparent: true, opacity: 0, depthTest: false });
+  const cabSprite = new THREE.Sprite(cabMat);
+  cabSprite.scale.set(1.3, 0.33, 1);
+  cabSprite.position.set(cabinPt.x, cabinPt.y + 1.0, cabinPt.z);
+  cabSprite.renderOrder = 999;
+  itinGroup.add(cabSprite);
+  itinCabins.push({ sprite: cabSprite, mat: cabMat });
+}
+
+// Start cabin label
+{
+  const startPt = itinDays[0].pts[0];
+  const c = document.createElement('canvas');
+  c.width = 384; c.height = 96;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(8,15,28,0.8)';
+  const r = 14;
+  ctx.beginPath();
+  ctx.moveTo(r,0); ctx.lineTo(384-r,0); ctx.arcTo(384,0,384,r,r);
+  ctx.lineTo(384,96-r); ctx.arcTo(384,96,384-r,96,r);
+  ctx.lineTo(r,96); ctx.arcTo(0,96,0,96-r,r);
+  ctx.lineTo(0,r); ctx.arcTo(0,0,r,0,r); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#22c55e';
+  ctx.beginPath();
+  ctx.moveTo(22, 60); ctx.lineTo(32, 40); ctx.lineTo(42, 60); ctx.closePath();
+  ctx.fill(); ctx.fillRect(24, 50, 16, 12);
+  ctx.fillStyle = '#e2e8f0'; ctx.font = '500 32px Inter,sans-serif';
+  ctx.textBaseline = 'middle'; ctx.fillText(cabinNames[0], 56, 50);
+  const tex = new THREE.CanvasTexture(c);
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthTest: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(1.3, 0.33, 1);
+  sprite.position.set(startPt.x, startPt.y + 1.0, startPt.z);
+  sprite.renderOrder = 999;
+  itinGroup.add(sprite);
+  itinCabins.unshift({ sprite, mat });
+}
+
+let itinState = 'waiting';
+let itinTimer = 0;
+
 // ── Waypoints (as 3D sprites) ──
 const wpFracs = [0.15, 0.35, 0.55, 0.75, 0.90];
 const wpLabels = [
   '"Tur over Besseggen"',
   'Rich map intelligence',
   '900+ huts · 2M trails',
-  'Analyze your trip',
+  'Multi-day itineraries',
   'Share with friends',
 ];
 const wpSubs = [
   'Just describe what you want',
   'Avalanche · Weather · Terrain · Infrastructure',
   'DNT · Statskog · 45K named routes',
-  'Elevation, pace & conditions',
+  '"3 dager over Hardangervidda"',
   'Collaborate on adventures',
 ];
 
@@ -920,7 +1050,7 @@ const DWELL_WP2 = 4.0;    // extra time at waypoint 2 (map layers demo)
 const MOVE = 3.5;          // seconds to travel between waypoints
 // Timeline: move → dwell → move → dwell → ...
 // 5 waypoints = 5 moves + 5 dwells = 5*3.5 + 5*2 = 27.5s
-const dwells = [DWELL_DEFAULT, DWELL_WP2, 3.5, DWELL_DEFAULT, DWELL_DEFAULT];
+const dwells = [DWELL_DEFAULT, DWELL_WP2, 3.5, 4.0, DWELL_DEFAULT];
 const keyframes = [];
 {
   const fracs = [0, ...wpFracs, 1.0]; // add start and end
@@ -1193,6 +1323,66 @@ function animate() {
       if (t >= 1) {
         cabinsState = 'done';
         cabinsGroup.visible = false;
+      }
+    }
+  }
+
+  // ── Itinerary animation (during fourth waypoint dwell) ──
+  const fourthDwellStart = MOVE + dwells[0] + MOVE + dwells[1] + MOVE + dwells[2] + MOVE;
+
+  if (itinState === 'waiting' && routeElapsed >= fourthDwellStart) {
+    itinState = 'drawing';
+    itinTimer = 0;
+    itinGroup.visible = true;
+  }
+
+  if (itinState !== 'waiting' && itinState !== 'done') {
+    itinTimer += 0.016;
+
+    if (itinState === 'drawing') {
+      // Draw each day sequentially: day 0 at 0s, day 1 at 0.8s, day 2 at 1.6s
+      for (let d = 0; d < 3; d++) {
+        const dayStart = d * 0.8;
+        const t = Math.max(0, Math.min(1, (itinTimer - dayStart) / 0.7));
+        const eased = t * t * (3 - 2 * t);
+        itinDays[d].mat.opacity = eased * 0.8;
+        itinDays[d].sMat.opacity = eased;
+
+        // Progressive line reveal
+        if (t > 0 && t < 1) {
+          const showPts = Math.max(2, Math.floor(eased * itinDays[d].pts.length));
+          const partGeo = new THREE.BufferGeometry().setFromPoints(itinDays[d].pts.slice(0, showPts));
+          itinDays[d].line.geometry.dispose();
+          itinDays[d].line.geometry = partGeo;
+        }
+
+        // Cabin labels appear at end of each day's draw
+        if (t >= 0.8) {
+          const cabIdx = d + 1; // +1 because index 0 is start cabin
+          if (cabIdx < itinCabins.length) {
+            itinCabins[cabIdx].mat.opacity = Math.min(1, (t - 0.8) / 0.2);
+          }
+        }
+      }
+      // Start cabin appears immediately
+      itinCabins[0].mat.opacity = Math.min(1, itinTimer / 0.4);
+
+      if (itinTimer >= 3.0) {
+        itinState = 'holding';
+        itinTimer = 0;
+      }
+    } else if (itinState === 'holding') {
+      if (itinTimer >= 1.2) {
+        itinState = 'fading';
+        itinTimer = 0;
+      }
+    } else if (itinState === 'fading') {
+      const t = Math.min(itinTimer / 0.8, 1);
+      for (const d of itinDays) { d.mat.opacity = 0.8 * (1-t); d.sMat.opacity = 1-t; }
+      for (const c of itinCabins) c.mat.opacity = 1 - t;
+      if (t >= 1) {
+        itinState = 'done';
+        itinGroup.visible = false;
       }
     }
   }
