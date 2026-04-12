@@ -2,6 +2,11 @@ name = "mtnlabs-open-web"
 compatibility_date = "2025-04-01"
 main = "src/worker.js"
 
+routes = [
+  { pattern = "www.mtnlabs.ai", custom_domain = true },
+  { pattern = "mtnlabs.ai", custom_domain = true },
+]
+
 [assets]
 directory = "./public"
 

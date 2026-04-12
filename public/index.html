@@ -35,10 +35,11 @@
     }
     .hero-top { padding: 2.5rem 3rem; }
     .hero-logo {
-      display: block; height: 32px; width: auto;
+      display: block; height: 48px; width: auto;
+      filter: invert(1) brightness(0.9);
     }
     @media (max-width: 768px) {
-      .hero-logo { height: 24px; }
+      .hero-logo { height: 36px; }
     }
     .hero-bottom {
       margin-top: auto; padding: 0 3rem 3.5rem;
@@ -343,10 +344,7 @@
   <canvas id="hero-canvas"></canvas>
   <div class="hero-overlay">
     <div class="hero-top">
-      <div style="display:flex;align-items:center;gap:0.6rem;">
-        <img src="/logo.svg" alt="" class="hero-logo">
-        <span style="font-size:1.2rem;font-weight:700;color:#e2e8f0;letter-spacing:-0.01em;">mtnlabs.ai</span>
-      </div>
+      <img src="/logo.svg" alt="mtnlabs.ai" class="hero-logo">
     </div>
     <div class="hero-bottom">
       <div class="hero-headline">
