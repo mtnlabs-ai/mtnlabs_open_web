@@ -143,26 +143,35 @@
       margin-bottom: 1.5rem;
     }
     .signup-form {
-      display: flex; gap: 0.5rem; margin-bottom: 1rem;
+      display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;
     }
-    .signup-form input {
-      flex: 1; padding: 0.7rem 1rem; border-radius: 10px;
+    .signup-form input, .signup-form select, .signup-form textarea {
+      width: 100%; padding: 0.65rem 1rem; border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.1);
       background: rgba(255,255,255,0.06);
-      color: #e2e8f0; font-size: 0.9rem;
+      color: #e2e8f0; font-size: 0.88rem;
       outline: none; font-family: inherit;
       transition: border-color 0.3s;
     }
-    .signup-form input:focus {
+    .signup-form input:focus, .signup-form select:focus, .signup-form textarea:focus {
       border-color: rgba(34,211,238,0.4);
     }
-    .signup-form input::placeholder { color: rgba(148,163,184,0.5); }
+    .signup-form input::placeholder, .signup-form textarea::placeholder {
+      color: rgba(148,163,184,0.5);
+    }
+    .signup-form select { color: rgba(148,163,184,0.5); appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 1rem center;
+    }
+    .signup-form select:valid { color: #e2e8f0; }
+    .signup-form select option { background: #0f172a; color: #e2e8f0; }
+    .signup-form textarea { resize: vertical; min-height: 50px; }
     .signup-form button {
-      padding: 0.7rem 1.25rem; border-radius: 10px; border: none;
+      padding: 0.75rem 1.25rem; border-radius: 10px; border: none;
       background: linear-gradient(135deg, #22d3ee, #3b82f6);
-      color: #fff; font-weight: 600; font-size: 0.9rem;
+      color: #fff; font-weight: 600; font-size: 0.92rem;
       cursor: pointer; transition: all 0.25s; font-family: inherit;
-      white-space: nowrap;
+      margin-top: 0.25rem;
     }
     .signup-form button:hover {
       box-shadow: 0 4px 16px rgba(34,211,238,0.3);
@@ -280,15 +289,24 @@
   <div class="signup-overlay" id="signup-overlay">
     <div class="signup-card">
       <span class="signup-heart">⛰️</span>
-      <h2>Join us on this adventure</h2>
-      <p>mtnlabs is a passion project built by mountain lovers. We're looking for fellow enthusiasts to try the planner, break things, and help shape what it becomes. No cost, no commitment — just honest feedback.</p>
+      <h2>Get early access</h2>
+      <p>mtnlabs is a passion project built by outdoors enthusiasts. We're looking for fellow enthusiasts to try the planner, break things, and help shape what it becomes. Sign up, and we'll get back to you as soon as there is an available slot.</p>
       <form class="signup-form" id="signup-form" onsubmit="return false;">
         <input type="email" id="signup-email" placeholder="your@email.com" required>
-        <button type="submit" id="signup-btn">I'm in!</button>
+        <input type="text" id="signup-name" placeholder="Name (optional)">
+        <select id="signup-activity">
+          <option value="" disabled selected>What do you enjoy?</option>
+          <option value="hiking">Hiking / trekking</option>
+          <option value="ski">Ski touring</option>
+          <option value="bike">Cycling / gravel</option>
+          <option value="running">Trail running</option>
+          <option value="multi">A bit of everything</option>
+        </select>
+        <textarea id="signup-about" placeholder="Anything you'd like us to know? Favourite areas, what you're looking for, etc." rows="2"></textarea>
+        <button type="submit" id="signup-btn">Join the waitlist</button>
       </form>
-      <div class="signup-success" id="signup-success">✓ Welcome aboard! We'll be in touch.</div>
-      <div class="signup-note">We'll only email you about access and updates. No spam, ever.</div>
-      <div class="signup-or">or just <a href="https://plan.mtnlabs.ai">jump straight in →</a></div>
+      <div class="signup-success" id="signup-success">✓ You're on the list! We'll reach out when a spot opens up.</div>
+      <div class="signup-note">We'll only email you when it's your turn. No spam, ever.</div>
     </div>
   </div>
 
@@ -1654,17 +1672,20 @@ let signupShown = false;
 document.getElementById('signup-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('signup-email')?.value;
+  const name = document.getElementById('signup-name')?.value || '';
+  const activity = document.getElementById('signup-activity')?.value || '';
+  const about = document.getElementById('signup-about')?.value || '';
   const btn = document.getElementById('signup-btn');
   if (!email || !btn) return;
 
-  btn.textContent = '...';
+  btn.textContent = 'Signing up...';
   btn.disabled = true;
 
-  // Store in a simple way — we can connect this to a backend later
+  // Store locally and send to backend when available
   try {
-    // For now, just store locally and show success
-    // TODO: connect to user-service signup endpoint
-    localStorage.setItem('mtnlabs_signup', JSON.stringify({ email, ts: Date.now() }));
+    const data = { email, name, activity, about, ts: Date.now() };
+    localStorage.setItem('mtnlabs_waitlist', JSON.stringify(data));
+    // TODO: POST to waitlist API endpoint
   } catch {}
 
   document.getElementById('signup-form').style.display = 'none';
