@@ -621,16 +621,16 @@ const wpSubs = [
 
 function makeTextSprite(title, subtitle) {
   const canvas = document.createElement('canvas');
-  const sz = 1024; // high-res for sharp text
+  const sz = 2048;
   canvas.width = sz;
-  canvas.height = 320;
+  canvas.height = 640;
   const ctx = canvas.getContext('2d');
 
   // Background pill
-  const pad = 32, bw = sz - pad * 2, bh = 256, r = 28;
-  ctx.fillStyle = 'rgba(8, 15, 28, 0.88)';
-  ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
-  ctx.lineWidth = 4;
+  const pad = 64, bw = sz - pad * 2, bh = 512, r = 48;
+  ctx.fillStyle = 'rgba(8, 15, 28, 0.9)';
+  ctx.strokeStyle = 'rgba(34, 211, 238, 0.3)';
+  ctx.lineWidth = 6;
   ctx.beginPath();
   ctx.moveTo(pad + r, pad);
   ctx.lineTo(pad + bw - r, pad);
@@ -648,22 +648,22 @@ function makeTextSprite(title, subtitle) {
   // Dot
   ctx.fillStyle = '#22d3ee';
   ctx.shadowColor = '#22d3ee';
-  ctx.shadowBlur = 16;
+  ctx.shadowBlur = 24;
   ctx.beginPath();
-  ctx.arc(sz / 2, 72, 8, 0, Math.PI * 2);
+  ctx.arc(sz / 2, 140, 12, 0, Math.PI * 2);
   ctx.fill();
   ctx.shadowBlur = 0;
 
   // Title
   ctx.fillStyle = '#22d3ee';
-  ctx.font = '600 48px Inter, sans-serif';
+  ctx.font = '600 88px Inter, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(title, sz / 2, 155);
+  ctx.fillText(title, sz / 2, 310);
 
   // Subtitle
   ctx.fillStyle = '#94a3b8';
-  ctx.font = '400 36px Inter, sans-serif';
-  ctx.fillText(subtitle, sz / 2, 215);
+  ctx.font = '400 64px Inter, sans-serif';
+  ctx.fillText(subtitle, sz / 2, 430);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.needsUpdate = true;
@@ -674,7 +674,7 @@ function makeTextSprite(title, subtitle) {
   const sprite = new THREE.Sprite(mat);
   // Scale based on viewport — smaller on mobile
   const isMobile = window.innerWidth < 768;
-  const s = isMobile ? 2.2 : 3.5;
+  const s = isMobile ? 1.6 : 2.4;
   sprite.scale.set(s, s * 0.32, 1);
   sprite.renderOrder = 999;
   return { sprite, mat };
