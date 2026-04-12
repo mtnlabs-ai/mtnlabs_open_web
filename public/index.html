@@ -181,7 +181,7 @@ import * as THREE from 'three';
 // ── Config ──
 const GRID = 200;          // terrain grid resolution
 const TERRAIN_SIZE = 60;   // world units
-const ROUTE_DURATION = 22; // seconds for full route
+const ROUTE_DURATION = 30; // seconds for full route (slower overall)
 const ROUTE_DELAY = 1.5;   // seconds before route starts
 const CONTOUR_INTERVAL = 0.8; // height between contour lines
 
@@ -392,7 +392,7 @@ let prevHeadPos = null;
 let trailTimer = 0;
 
 // ── Waypoints (as 3D sprites) ──
-const wpFracs = [0.08, 0.28, 0.50, 0.72, 0.92];
+const wpFracs = [0.15, 0.35, 0.55, 0.75, 0.90];
 const wpLabels = [
   '"Finn en skitur fra Geilo"',
   'AI finds your route',
@@ -498,6 +498,23 @@ const clock = new THREE.Clock();
 
 function easeInOut(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
 
+// Remap progress to slow down near waypoints (dwell zones)
+function dwellProgress(t) {
+  // Apply ease-in-out first
+  let p = easeInOut(t);
+  // Then add "sticky" zones near each waypoint
+  // This compresses the progress curve to spend more time near waypoints
+  for (const wf of wpFracs) {
+    const dist = Math.abs(p - wf);
+    if (dist < 0.06) {
+      // Within dwell zone: slow down by pulling toward the waypoint
+      const pull = (0.06 - dist) / 0.06; // 0..1, strongest at center
+      p += (wf - p) * pull * 0.4;
+    }
+  }
+  return Math.max(0, Math.min(1, p));
+}
+
 function animate() {
   requestAnimationFrame(animate);
   const elapsed = clock.getElapsedTime();
@@ -505,7 +522,7 @@ function animate() {
   // Route progress
   const routeT = Math.max(0, elapsed - ROUTE_DELAY);
   const rawProgress = Math.min(routeT / ROUTE_DURATION, 1);
-  const progress = easeInOut(rawProgress);
+  const progress = dwellProgress(rawProgress);
 
   // Update route line
   if (progress > 0) updateRouteLine(progress);
