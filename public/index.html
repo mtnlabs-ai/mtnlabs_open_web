@@ -496,33 +496,52 @@ onResize();
 let startTime = 0;
 const clock = new THREE.Clock();
 
-function easeInOut(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
-
-// Remap progress to slow down near waypoints (dwell zones)
-function dwellProgress(t) {
-  // Apply ease-in-out first
-  let p = easeInOut(t);
-  // Then add "sticky" zones near each waypoint
-  // This compresses the progress curve to spend more time near waypoints
-  for (const wf of wpFracs) {
-    const dist = Math.abs(p - wf);
-    if (dist < 0.06) {
-      // Within dwell zone: slow down by pulling toward the waypoint
-      const pull = (0.06 - dist) / 0.06; // 0..1, strongest at center
-      p += (wf - p) * pull * 0.4;
+// Keyframed route progress: move between waypoints, pause at each one.
+// Each segment: [startTime, endTime] maps to [startFrac, endFrac] of route.
+// Gaps between segments = dwell time at the waypoint.
+const DWELL = 2.0; // seconds to pause at each waypoint
+const MOVE = 3.5;  // seconds to travel between waypoints
+// Timeline: move → dwell → move → dwell → ...
+// 5 waypoints = 5 moves + 5 dwells = 5*3.5 + 5*2 = 27.5s
+const keyframes = [];
+{
+  const fracs = [0, ...wpFracs, 1.0]; // add start and end
+  let time = 0;
+  for (let i = 0; i < fracs.length - 1; i++) {
+    const from = fracs[i], to = fracs[i + 1];
+    keyframes.push({ t0: time, t1: time + MOVE, f0: from, f1: to });
+    time += MOVE;
+    if (i < fracs.length - 2) { // dwell at waypoints (not after last)
+      keyframes.push({ t0: time, t1: time + DWELL, f0: to, f1: to }); // hold
+      time += DWELL;
     }
   }
-  return Math.max(0, Math.min(1, p));
+  // Override total duration
+  // ROUTE_DURATION is used below
+}
+const TOTAL_KEYFRAME_TIME = keyframes[keyframes.length - 1].t1;
+
+function keyframedProgress(elapsed) {
+  if (elapsed <= 0) return 0;
+  if (elapsed >= TOTAL_KEYFRAME_TIME) return 1;
+  for (const kf of keyframes) {
+    if (elapsed >= kf.t0 && elapsed < kf.t1) {
+      const segT = (elapsed - kf.t0) / (kf.t1 - kf.t0);
+      // Ease within each move segment
+      const eased = segT * segT * (3 - 2 * segT); // smoothstep
+      return kf.f0 + (kf.f1 - kf.f0) * eased;
+    }
+  }
+  return 1;
 }
 
 function animate() {
   requestAnimationFrame(animate);
   const elapsed = clock.getElapsedTime();
 
-  // Route progress
+  // Route progress (keyframed with dwells at waypoints)
   const routeT = Math.max(0, elapsed - ROUTE_DELAY);
-  const rawProgress = Math.min(routeT / ROUTE_DURATION, 1);
-  const progress = dwellProgress(rawProgress);
+  const progress = keyframedProgress(routeT);
 
   // Update route line
   if (progress > 0) updateRouteLine(progress);
