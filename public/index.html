@@ -202,7 +202,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setClearColor(0x040810);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x040810, 0.025);
+scene.fog = new THREE.FogExp2(0x040810, 0.012);
 const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
 
 // ── Terrain mesh ──
@@ -215,12 +215,25 @@ for (let i = 0; i < pos.count; i++) {
 }
 terrainGeo.computeVertexNormals();
 
-// Terrain material — dark with subtle shading
+// Terrain material — height-based vertex colors for topo-map look
+const colors = new Float32Array(pos.count * 3);
+for (let i = 0; i < pos.count; i++) {
+  const h = pos.getY(i);
+  // Map height to color: deep valleys dark blue → mid slopes slate → peaks light
+  const t = (h + 3) / 9; // normalize roughly -3..6 to 0..1
+  const r = 0.04 + t * 0.10;
+  const g = 0.06 + t * 0.14;
+  const b = 0.12 + t * 0.18;
+  colors[i * 3] = r;
+  colors[i * 3 + 1] = g;
+  colors[i * 3 + 2] = b;
+}
+terrainGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
 const terrainMat = new THREE.MeshStandardMaterial({
-  color: 0x0a1628,
-  roughness: 0.95,
-  metalness: 0.0,
-  wireframe: false,
+  vertexColors: true,
+  roughness: 0.85,
+  metalness: 0.05,
   flatShading: false,
 });
 const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
@@ -271,9 +284,9 @@ function buildContourLines() {
     if (sorted.length < 3) continue;
 
     const geo = new THREE.BufferGeometry().setFromPoints(sorted);
-    const brightness = 0.06 + (h - minH) / (maxH - minH) * 0.08;
+    const brightness = 0.15 + (h - minH) / (maxH - minH) * 0.25;
     const mat = new THREE.LineBasicMaterial({
-      color: new THREE.Color(0.13, 0.52, 0.93),
+      color: new THREE.Color(0.2, 0.6, 0.95),
       transparent: true,
       opacity: brightness,
     });
@@ -284,13 +297,16 @@ function buildContourLines() {
 scene.add(buildContourLines());
 
 // ── Lighting ──
-const ambient = new THREE.AmbientLight(0x1a2a4a, 0.6);
+const ambient = new THREE.AmbientLight(0x3a5a8a, 1.2);
 scene.add(ambient);
-const dirLight = new THREE.DirectionalLight(0x4488cc, 0.4);
-dirLight.position.set(10, 15, 5);
+const dirLight = new THREE.DirectionalLight(0x6699cc, 1.0);
+dirLight.position.set(10, 20, 5);
 scene.add(dirLight);
-const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.15);
-rimLight.position.set(-5, 3, -10);
+const fillLight = new THREE.DirectionalLight(0x334466, 0.5);
+fillLight.position.set(-10, 10, -5);
+scene.add(fillLight);
+const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.3);
+rimLight.position.set(-5, 5, -10);
 scene.add(rimLight);
 
 // ── Route path ──
