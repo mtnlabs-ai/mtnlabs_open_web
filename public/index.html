@@ -35,9 +35,7 @@
     }
     .hero-top { padding: 2.5rem 3rem; }
     .hero-logo {
-      font-size: 1.4rem; font-weight: 700; letter-spacing: -0.01em;
-      background: linear-gradient(135deg, #22d3ee, #60a5fa);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      display: block; height: 36px; width: auto;
     }
     .hero-bottom {
       margin-top: auto; padding: 0 3rem 3.5rem;
@@ -173,7 +171,7 @@
 <section class="hero">
   <canvas id="hero-canvas"></canvas>
   <div class="hero-overlay">
-    <div class="hero-top"><div class="hero-logo">mtnlabs.ai</div></div>
+    <div class="hero-top"><img src="/logo.svg" alt="mtnlabs.ai" class="hero-logo"></div>
     <div class="hero-bottom">
       <div class="hero-headline">
         <h1>Plan your next mountain adventure</h1>
