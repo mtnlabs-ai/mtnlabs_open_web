@@ -246,58 +246,93 @@ const terrainMat = new THREE.MeshStandardMaterial({
 const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
 scene.add(terrainMesh);
 
-// ── Contour lines ──
+// ── Contour lines (marching squares) ──
 function buildContourLines() {
   const halfSize = TERRAIN_SIZE / 2;
   const step = TERRAIN_SIZE / GRID;
-  const minH = -3, maxH = 8;
+  const minH = -2, maxH = 7;
+  const interval = 0.5; // tighter contour spacing
   const contourGroup = new THREE.Group();
 
-  for (let h = minH; h <= maxH; h += CONTOUR_INTERVAL) {
-    const points = [];
-    // March across grid rows to find contour crossings
-    for (let iz = 0; iz < GRID; iz++) {
+  // Sample terrain into a grid for marching squares
+  const samples = [];
+  for (let iz = 0; iz <= GRID; iz++) {
+    const row = [];
+    for (let ix = 0; ix <= GRID; ix++) {
+      const x = -halfSize + ix * step;
       const z = -halfSize + iz * step;
-      let prevH = terrain(-halfSize, z);
-      for (let ix = 1; ix <= GRID; ix++) {
-        const x = -halfSize + ix * step;
-        const curH = terrain(x, z);
-        if ((prevH < h && curH >= h) || (prevH >= h && curH < h)) {
-          // Interpolate crossing position
-          const t = (h - prevH) / (curH - prevH);
-          const cx = x - step * (1 - t);
-          points.push(new THREE.Vector3(cx, h + 0.02, z));
+      row.push(terrain(x, z));
+    }
+    samples.push(row);
+  }
+
+  for (let h = minH; h <= maxH; h += interval) {
+    const segments = [];
+    // Marching squares: check each cell for contour crossings
+    for (let iz = 0; iz < GRID; iz++) {
+      for (let ix = 0; ix < GRID; ix++) {
+        const v00 = samples[iz][ix] - h;
+        const v10 = samples[iz][ix+1] - h;
+        const v01 = samples[iz+1][ix] - h;
+        const v11 = samples[iz+1][ix+1] - h;
+
+        const x0 = -halfSize + ix * step;
+        const z0 = -halfSize + iz * step;
+
+        // Check edges for sign changes and interpolate
+        const edges = [];
+        if (v00 * v10 < 0) { const t = v00/(v00-v10); edges.push([x0+t*step, z0]); }
+        if (v10 * v11 < 0) { const t = v10/(v10-v11); edges.push([x0+step, z0+t*step]); }
+        if (v01 * v11 < 0) { const t = v01/(v01-v11); edges.push([x0+t*step, z0+step]); }
+        if (v00 * v01 < 0) { const t = v00/(v00-v01); edges.push([x0, z0+t*step]); }
+
+        // Connect pairs of edge crossings
+        for (let e = 0; e + 1 < edges.length; e += 2) {
+          segments.push([edges[e], edges[e+1]]);
         }
-        prevH = curH;
       }
     }
-    if (points.length < 2) continue;
+    if (segments.length < 1) continue;
 
-    // Sort points into connected segments by proximity
-    const sorted = [points[0]];
-    const used = new Set([0]);
-    for (let n = 1; n < Math.min(points.length, 500); n++) {
-      const last = sorted[sorted.length - 1];
-      let bestDist = Infinity, bestIdx = -1;
-      for (let j = 0; j < points.length; j++) {
-        if (used.has(j)) continue;
-        const d = last.distanceTo(points[j]);
-        if (d < bestDist && d < step * 3) { bestDist = d; bestIdx = j; }
+    // Chain connected segments into polylines
+    const chains = [];
+    const used = new Set();
+    for (let s = 0; s < segments.length; s++) {
+      if (used.has(s)) continue;
+      used.add(s);
+      const chain = [segments[s][0], segments[s][1]];
+
+      // Extend forward
+      let extended = true;
+      while (extended) {
+        extended = false;
+        const tail = chain[chain.length - 1];
+        for (let j = 0; j < segments.length; j++) {
+          if (used.has(j)) continue;
+          const [a, b] = segments[j];
+          const da = Math.hypot(a[0]-tail[0], a[1]-tail[1]);
+          const db = Math.hypot(b[0]-tail[0], b[1]-tail[1]);
+          if (da < step * 1.5) { chain.push(b); used.add(j); extended = true; break; }
+          if (db < step * 1.5) { chain.push(a); used.add(j); extended = true; break; }
+        }
       }
-      if (bestIdx < 0) break;
-      sorted.push(points[bestIdx]);
-      used.add(bestIdx);
+      if (chain.length >= 3) chains.push(chain);
     }
-    if (sorted.length < 3) continue;
 
-    const geo = new THREE.BufferGeometry().setFromPoints(sorted);
-    const brightness = 0.15 + (h - minH) / (maxH - minH) * 0.25;
-    const mat = new THREE.LineBasicMaterial({
-      color: new THREE.Color(0.2, 0.6, 0.95),
-      transparent: true,
-      opacity: brightness,
-    });
-    contourGroup.add(new THREE.Line(geo, mat));
+    // Every 5th contour is a "major" contour (brighter)
+    const isMajor = Math.abs(Math.round(h / interval) % 5) === 0;
+    const opacity = isMajor ? 0.45 : 0.20;
+    const lineWidth = 1;
+    const color = new THREE.Color(0.25, 0.65, 1.0);
+
+    for (const chain of chains) {
+      const pts = chain.map(([x, z]) => new THREE.Vector3(x, h + 0.03, z));
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const mat = new THREE.LineBasicMaterial({
+        color, transparent: true, opacity, linewidth: lineWidth,
+      });
+      contourGroup.add(new THREE.Line(geo, mat));
+    }
   }
   return contourGroup;
 }
