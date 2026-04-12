@@ -4,7 +4,6 @@ main = "src/worker.js"
 
 routes = [
   { pattern = "www.mtnlabs.ai", custom_domain = true },
-  { pattern = "mtnlabs.ai", custom_domain = true, override_existing_origin = true, override_existing_dns_record = true },
 ]
 
 [assets]
