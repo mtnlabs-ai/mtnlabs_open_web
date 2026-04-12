@@ -35,7 +35,10 @@
     }
     .hero-top { padding: 2.5rem 3rem; }
     .hero-logo {
-      display: block; height: 44px; width: auto;
+      display: block; height: 32px; width: auto;
+    }
+    @media (max-width: 768px) {
+      .hero-logo { height: 24px; }
     }
     .hero-bottom {
       margin-top: auto; padding: 0 3rem 3.5rem;
@@ -249,7 +252,12 @@
 <section class="hero">
   <canvas id="hero-canvas"></canvas>
   <div class="hero-overlay">
-    <div class="hero-top"><img src="/logo.svg" alt="mtnlabs.ai" class="hero-logo"></div>
+    <div class="hero-top">
+      <div style="display:flex;align-items:center;gap:0.6rem;">
+        <img src="/logo.svg" alt="" class="hero-logo">
+        <span style="font-size:1.2rem;font-weight:700;color:#e2e8f0;letter-spacing:-0.01em;">mtnlabs.ai</span>
+      </div>
+    </div>
     <div class="hero-bottom">
       <div class="hero-headline">
         <h1>Plan your next mountain adventure</h1>
