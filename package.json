@@ -1,0 +1,10 @@
+{
+  "name": "mtnlabs-open-web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx wrangler pages dev dist",
+    "build": "echo 'Static site — no build step needed'",
+    "deploy": "npx wrangler pages deploy dist --project-name mtnlabsai"
+  }
+}
