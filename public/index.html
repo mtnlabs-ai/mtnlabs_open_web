@@ -284,6 +284,7 @@
       activity_running: 'L\u00f8ping i fjellet',
       activity_multi: 'Litt av alt',
       about_placeholder: 'Noe du vil vi skal vite? Favoritomr\u00e5der, hva du ser etter, osv.',
+      newsletter_label: 'Send meg ogs\u00e5 nyheter og oppdateringer om mtnlabs',
       signup_btn: 'Sett meg p\u00e5 venteliste',
       signup_success: '\u2713 Du er p\u00e5 listen! Vi tar kontakt n\u00e5r det er en ledig plass.',
       signup_note: 'Vi sender kun e-post n\u00e5r det er din tur. Ingen spam.',
@@ -381,6 +382,10 @@
           <option value="multi" data-i18n="activity_multi">A bit of everything</option>
         </select>
         <textarea id="signup-about" data-i18n-placeholder="about_placeholder" placeholder="Anything you'd like us to know? Favourite areas, what you're looking for, etc." rows="2"></textarea>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:#94a3b8;cursor:pointer;margin:0.2rem 0;">
+          <input type="checkbox" id="signup-newsletter" checked style="accent-color:#22d3ee;width:16px;height:16px;cursor:pointer;">
+          <span data-i18n="newsletter_label">Also send me occasional updates and news about mtnlabs</span>
+        </label>
         <button type="submit" id="signup-btn" data-i18n="signup_btn">Join the waitlist</button>
       </form>
       <div class="signup-error" id="signup-error"></div>
@@ -1754,6 +1759,7 @@ document.getElementById('signup-form')?.addEventListener('submit', async (e) => 
   const name = document.getElementById('signup-name')?.value || '';
   const activity = document.getElementById('signup-activity')?.value || '';
   const about = document.getElementById('signup-about')?.value || '';
+  const newsletter = document.getElementById('signup-newsletter')?.checked ?? true;
   const btn = document.getElementById('signup-btn');
   const errorEl = document.getElementById('signup-error');
   if (!email || !btn) return;
@@ -1771,7 +1777,7 @@ document.getElementById('signup-form')?.addEventListener('submit', async (e) => 
     const resp = await fetch('/api/waitlist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, name, activity, about }),
+      body: JSON.stringify({ email, name, activity, about, newsletter }),
     });
     const result = await resp.json();
     if (result.success) {

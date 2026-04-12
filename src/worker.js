@@ -28,7 +28,7 @@ async function handleWaitlist(request, env) {
 
   try {
     const body = await request.json();
-    const { email, name, activity, about } = body;
+    const { email, name, activity, about, newsletter } = body;
 
     // Validate email
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -60,7 +60,7 @@ async function handleWaitlist(request, env) {
     }
 
     // Send notification email to Fredrik
-    const notificationHtml = buildNotificationEmail({ email, name, activity, about, timestamp });
+    const notificationHtml = buildNotificationEmail({ email, name, activity, about, newsletter, timestamp });
     const notifyResult = await sendPostmarkEmail(env, {
       From: 'mtnlabs <hello@mtnlabs.ai>',
       To: env.NOTIFY_EMAIL,
@@ -133,7 +133,7 @@ function buildConfirmationEmail(name) {
 </html>`;
 }
 
-function buildNotificationEmail({ email, name, activity, about, timestamp }) {
+function buildNotificationEmail({ email, name, activity, about, newsletter, timestamp }) {
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"></head>
@@ -144,6 +144,7 @@ function buildNotificationEmail({ email, name, activity, about, timestamp }) {
     <tr><td style="font-weight:bold;vertical-align:top;">Name:</td><td>${escapeHtml(name || '(not provided)')}</td></tr>
     <tr><td style="font-weight:bold;vertical-align:top;">Activity:</td><td>${escapeHtml(activity || '(not selected)')}</td></tr>
     <tr><td style="font-weight:bold;vertical-align:top;">About:</td><td>${escapeHtml(about || '(empty)')}</td></tr>
+    <tr><td style="font-weight:bold;vertical-align:top;">Newsletter:</td><td>${newsletter ? '✅ Yes' : '❌ No'}</td></tr>
     <tr><td style="font-weight:bold;vertical-align:top;">Timestamp:</td><td>${escapeHtml(timestamp)}</td></tr>
   </table>
 </body>
