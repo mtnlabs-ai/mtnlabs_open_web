@@ -4,43 +4,414 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>mtnlabs.ai — Plan your next mountain adventure</title>
+  <meta name="description" content="AI-powered route planning for Norwegian mountains. Discover trails, plan ski tours, and explore the wilderness.">
+  <meta property="og:title" content="mtnlabs.ai — Plan your next mountain adventure">
+  <meta property="og:description" content="AI-powered route planning for Norwegian mountains">
+  <meta property="og:url" content="https://www.mtnlabs.ai">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #0a0f1a;
       color: #e2e8f0;
+      overflow-x: hidden;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
     }
-    .container { text-align: center; padding: 2rem; max-width: 600px; }
-    h1 {
-      font-size: 3rem; font-weight: 700; margin-bottom: 0.5rem;
-      background: linear-gradient(90deg, #22d3ee, #60a5fa);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+
+    #hero-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
     }
-    .tagline { font-size: 1.25rem; color: #94a3b8; margin-bottom: 2rem; }
+
+    /* Gradient overlay on canvas */
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(10, 15, 26, 0) 0%,
+        rgba(10, 15, 26, 0) 50%,
+        rgba(10, 15, 26, 0.7) 80%,
+        rgba(10, 15, 26, 1) 100%
+      );
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 2rem;
+      max-width: 720px;
+      animation: fadeInUp 1.2s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo {
+      font-size: 4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #22d3ee 0%, #60a5fa 50%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tagline {
+      font-size: 1.35rem;
+      font-weight: 300;
+      color: #94a3b8;
+      margin-bottom: 2.5rem;
+      line-height: 1.5;
+    }
+
+    .cta-group {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
     .cta {
-      display: inline-block; padding: 0.875rem 2rem;
-      background: linear-gradient(135deg, #22d3ee, #3b82f6);
-      color: #fff; text-decoration: none; border-radius: 12px;
-      font-size: 1.1rem; font-weight: 600;
-      transition: transform 0.2s, box-shadow 0.2s;
-      box-shadow: 0 4px 20px rgba(34, 211, 238, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 2rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      cursor: pointer;
     }
-    .cta:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(34, 211, 238, 0.4); }
-    .footer { position: absolute; bottom: 2rem; color: #475569; font-size: 0.85rem; }
+
+    .cta-primary {
+      background: linear-gradient(135deg, #22d3ee, #3b82f6);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(34, 211, 238, 0.25);
+    }
+    .cta-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(34, 211, 238, 0.35);
+    }
+
+    .cta-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .cta-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+    }
+
+    /* ── Features ── */
+    .features {
+      position: relative;
+      z-index: 2;
+      padding: 4rem 2rem 6rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: all 0.3s ease;
+    }
+    .feature-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(34, 211, 238, 0.2);
+      transform: translateY(-4px);
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #e2e8f0;
+    }
+
+    .feature-card p {
+      font-size: 0.9rem;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: #334155;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 640px) {
+      .logo { font-size: 2.5rem; }
+      .tagline { font-size: 1.1rem; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>mtnlabs.ai</h1>
+
+<section class="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <h1 class="logo">mtnlabs.ai</h1>
     <p class="tagline">AI-powered route planning for Norwegian mountains</p>
-    <a href="https://plan.mtnlabs.ai" class="cta">Open the planner</a>
+    <div class="cta-group">
+      <a href="https://plan.mtnlabs.ai" class="cta cta-primary">
+        Open the planner
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="https://api.mtnlabs.ai/developer" class="cta cta-secondary">Developer docs</a>
+    </div>
   </div>
-  <div class="footer">mtnlabs 2026</div>
+</section>
+
+<section class="features">
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🏔️</div>
+      <h3>AI route discovery</h3>
+      <p>Describe what you want — a ski tour from Geilo with 1000m elevation, a rundtur near Finse — and get real trail-matched suggestions.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🗺️</div>
+      <h3>Build & edit routes</h3>
+      <p>Draw routes on the map with intelligent snapping to trails, off-trail terrain routing, and real-time slope analysis.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⛷️</div>
+      <h3>Ski, hike & bike</h3>
+      <p>Purpose-built for Norwegian conditions — ski touring, hiking, gravel biking — with DNT cabin integration and avalanche warnings.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">mtnlabs &copy; 2026</footer>
+
+<script>
+// ── Mountain terrain particle animation ──
+// Renders a 3D-looking mountain landscape using 2D canvas
+// with flowing particles that create a topographic feel.
+
+(function() {
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  let W, H, particles, ridgePoints, t = 0;
+  const PARTICLE_COUNT = 120;
+  const RIDGE_SEGMENTS = 200;
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.clientWidth;
+    H = canvas.clientHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.scale(dpr, dpr);
+    generateRidges();
+  }
+
+  // Simple noise function
+  function noise(x) {
+    const s = Math.sin(x * 127.1) * 43758.5453;
+    return s - Math.floor(s);
+  }
+
+  function fbm(x, octaves) {
+    let v = 0, amp = 0.5, freq = 1;
+    for (let i = 0; i < octaves; i++) {
+      v += amp * (noise(x * freq) * 2 - 1);
+      amp *= 0.5;
+      freq *= 2.1;
+    }
+    return v;
+  }
+
+  function generateRidges() {
+    ridgePoints = [];
+    // Generate 3 mountain ridge layers
+    for (let layer = 0; layer < 3; layer++) {
+      const points = [];
+      const baseY = H * (0.35 + layer * 0.12);
+      const amplitude = H * (0.18 - layer * 0.04);
+      const offset = layer * 3.7;
+      for (let i = 0; i <= RIDGE_SEGMENTS; i++) {
+        const x = (i / RIDGE_SEGMENTS) * W;
+        const nx = i / RIDGE_SEGMENTS * 4 + offset;
+        const y = baseY - amplitude * (
+          0.5 * fbm(nx, 5) +
+          0.3 * Math.abs(fbm(nx * 1.5 + 10, 3)) +
+          0.2 * Math.max(0, fbm(nx * 0.7 + 5, 4))
+        );
+        points.push({ x, y });
+      }
+      ridgePoints.push(points);
+    }
+  }
+
+  function initParticles() {
+    particles = [];
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      particles.push({
+        x: Math.random() * W,
+        y: Math.random() * H * 0.7,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: -Math.random() * 0.2 - 0.05,
+        size: Math.random() * 1.5 + 0.5,
+        alpha: Math.random() * 0.4 + 0.1,
+        life: Math.random() * 400,
+      });
+    }
+  }
+
+  function drawSky() {
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, '#060a14');
+    grad.addColorStop(0.3, '#0c1629');
+    grad.addColorStop(0.6, '#111d35');
+    grad.addColorStop(1, '#0a0f1a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle aurora glow
+    const auroraX = W * 0.5 + Math.sin(t * 0.0003) * W * 0.2;
+    const auroraGrad = ctx.createRadialGradient(
+      auroraX, H * 0.15, 0,
+      auroraX, H * 0.15, W * 0.5
+    );
+    auroraGrad.addColorStop(0, `rgba(34, 211, 238, ${0.04 + Math.sin(t * 0.0005) * 0.02})`);
+    auroraGrad.addColorStop(0.5, `rgba(96, 165, 250, ${0.02 + Math.sin(t * 0.0007) * 0.01})`);
+    auroraGrad.addColorStop(1, 'rgba(96, 165, 250, 0)');
+    ctx.fillStyle = auroraGrad;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function drawRidges() {
+    const colors = [
+      { fill: 'rgba(15, 25, 50, 0.9)', stroke: 'rgba(34, 211, 238, 0.08)' },
+      { fill: 'rgba(12, 20, 40, 0.95)', stroke: 'rgba(59, 130, 246, 0.06)' },
+      { fill: 'rgba(10, 15, 30, 1)', stroke: 'rgba(100, 116, 139, 0.04)' },
+    ];
+
+    for (let layer = ridgePoints.length - 1; layer >= 0; layer--) {
+      const points = ridgePoints[layer];
+      const c = colors[layer];
+      const drift = Math.sin(t * 0.0002 + layer) * 3;
+
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      for (const p of points) {
+        ctx.lineTo(p.x, p.y + drift);
+      }
+      ctx.lineTo(W, H);
+      ctx.closePath();
+      ctx.fillStyle = c.fill;
+      ctx.fill();
+
+      // Ridge line glow
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y + drift);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y + drift);
+      }
+      ctx.strokeStyle = c.stroke;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  }
+
+  function drawStars() {
+    const starCount = 60;
+    for (let i = 0; i < starCount; i++) {
+      const sx = noise(i * 0.1) * W;
+      const sy = noise(i * 0.1 + 100) * H * 0.4;
+      const brightness = 0.2 + 0.3 * Math.sin(t * 0.001 + i);
+      const size = noise(i * 0.3) * 1.2 + 0.3;
+      ctx.beginPath();
+      ctx.arc(sx, sy, size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200, 220, 255, ${brightness})`;
+      ctx.fill();
+    }
+  }
+
+  function drawParticles() {
+    for (const p of particles) {
+      p.x += p.vx + Math.sin(t * 0.001 + p.life) * 0.1;
+      p.y += p.vy;
+      p.life++;
+
+      if (p.y < -10 || p.x < -10 || p.x > W + 10) {
+        p.x = Math.random() * W;
+        p.y = H * 0.5 + Math.random() * H * 0.3;
+        p.life = 0;
+      }
+
+      const fadeIn = Math.min(p.life / 50, 1);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200, 220, 255, ${p.alpha * fadeIn})`;
+      ctx.fill();
+    }
+  }
+
+  function frame(ts) {
+    t = ts;
+    ctx.clearRect(0, 0, W, H);
+    drawSky();
+    drawStars();
+    drawRidges();
+    drawParticles();
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  initParticles();
+  requestAnimationFrame(frame);
+})();
+</script>
+
 </body>
 </html>
