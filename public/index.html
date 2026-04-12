@@ -409,13 +409,22 @@ function makeTextSprite(title, subtitle) {
   canvas.height = 160;
   const ctx = canvas.getContext('2d');
 
-  // Background pill
-  const pad = 16;
+  // Background pill (manual rounded rect for compatibility)
+  const pad = 16, w = sz - pad * 2, h = 128, r = 14;
   ctx.fillStyle = 'rgba(8, 15, 28, 0.85)';
-  ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(34, 211, 238, 0.4)';
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.roundRect(pad, pad, sz - pad * 2, 128, 14);
+  ctx.moveTo(pad + r, pad);
+  ctx.lineTo(pad + w - r, pad);
+  ctx.arcTo(pad + w, pad, pad + w, pad + r, r);
+  ctx.lineTo(pad + w, pad + h - r);
+  ctx.arcTo(pad + w, pad + h, pad + w - r, pad + h, r);
+  ctx.lineTo(pad + r, pad + h);
+  ctx.arcTo(pad, pad + h, pad, pad + h - r, r);
+  ctx.lineTo(pad, pad + r);
+  ctx.arcTo(pad, pad, pad + r, pad, r);
+  ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
@@ -446,14 +455,15 @@ function makeTextSprite(title, subtitle) {
     depthTest: false, depthWrite: false,
   });
   const sprite = new THREE.Sprite(mat);
-  sprite.scale.set(4, 1.25, 1);
+  sprite.scale.set(5, 1.6, 1);
+  sprite.renderOrder = 999; // render on top of everything
   return { sprite, mat };
 }
 
 const wpSprites = wpFracs.map((frac, i) => {
   const { sprite, mat } = makeTextSprite(wpLabels[i], wpSubs[i]);
   const pos = routeCurve.getPoint(frac);
-  sprite.position.set(pos.x, pos.y + 2.0, pos.z);
+  sprite.position.set(pos.x, pos.y + 2.5, pos.z);
   sprite.visible = false;
   scene.add(sprite);
   return { sprite, mat, frac, targetOpacity: 0 };
@@ -562,7 +572,7 @@ function animate() {
       wp.sprite.visible = true;
     }
     // Smooth fade
-    wp.mat.opacity += (wp.targetOpacity - wp.mat.opacity) * 0.03;
+    wp.mat.opacity += (wp.targetOpacity - wp.mat.opacity) * 0.08; // faster fade-in
     if (wp.mat.opacity < 0.01) wp.sprite.visible = false;
   }
 
