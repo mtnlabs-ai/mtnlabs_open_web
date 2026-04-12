@@ -1,12 +1,16 @@
 name = "mtnlabs-open-web"
 compatibility_date = "2025-04-01"
+main = "src/worker.js"
 
 [assets]
 directory = "./public"
+
+[vars]
+POSTMARK_TOKEN = "0451c798-4202-4b8d-baa1-540bffcaf0c2"
+NOTIFY_EMAIL = "fredrik@mtnlabs.ai"
 
 [build]
 command = "echo 'Static site — no build needed'"
 
 [observability]
 enabled = false
-

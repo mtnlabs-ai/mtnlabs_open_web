@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-root">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -191,6 +191,10 @@
       display: none; color: #22c55e; font-size: 0.95rem;
       font-weight: 500; padding: 0.75rem 0;
     }
+    .signup-error {
+      display: none; color: #f87171; font-size: 0.88rem;
+      font-weight: 500; padding: 0.5rem 0;
+    }
 
     /* ── Data sources ticker ── */
     .sources-bar {
@@ -257,6 +261,83 @@
   </style>
 </head>
 <body>
+<script>
+// ── i18n: Norwegian locale detection and translation ──
+(function() {
+  var lang = navigator.language || navigator.languages && navigator.languages[0] || 'en';
+  var isNb = /^(nb|nn|no)(-|$)/i.test(lang);
+  if (isNb) document.getElementById('html-root').setAttribute('lang', 'nb');
+
+  var T = {
+    nb: {
+      hero_title: 'Planlegg ditt neste fjelleventyr',
+      hero_subtitle: 'AI-drevet ruteplanlegging for norsk natur \u2014 skitur, fottur og mer.',
+      cta_planner: '\u00c5pne planleggeren',
+      cta_docs: 'Dokumentasjon',
+      signup_title: 'F\u00e5 tidlig tilgang',
+      signup_desc: 'mtnlabs er et lidenskapsprosjekt bygget av friluftsfolk. Vi leter etter andre entusiaster som vil pr\u00f8ve planleggeren, teste grensene og forme det videre. Registrer deg, s\u00e5 tar vi kontakt n\u00e5r det er en ledig plass.',
+      name_placeholder: 'Navn (valgfritt)',
+      activity_prompt: 'Hva liker du \u00e5 gj\u00f8re?',
+      activity_hiking: 'Fottur / trekking',
+      activity_ski: 'Skitur / randonee',
+      activity_bike: 'Sykling / gravel',
+      activity_running: 'L\u00f8ping i fjellet',
+      activity_multi: 'Litt av alt',
+      about_placeholder: 'Noe du vil vi skal vite? Favoritomr\u00e5der, hva du ser etter, osv.',
+      signup_btn: 'Sett meg p\u00e5 venteliste',
+      signup_success: '\u2713 Du er p\u00e5 listen! Vi tar kontakt n\u00e5r det er en ledig plass.',
+      signup_note: 'Vi sender kun e-post n\u00e5r det er din tur. Ingen spam.',
+      signup_error_generic: 'Noe gikk galt. Pr\u00f8v igjen.',
+      signup_submitting: 'Registrerer\u2026',
+      sources_label: 'Drevet av \u00e5pne data fra',
+      features_title: 'Bygget for norske fjell',
+      feature_ai_title: '\ud83c\udfd4\ufe0f AI-ruteforslag',
+      feature_ai_desc: 'Be om en skitur fra Geilo med 1000 h\u00f8ydemeter, en rundtur ved Finse eller en graveltur \u2014 AI-en finner ekte, stifestede ruter.',
+      feature_builder_title: '\ud83d\uddfa\ufe0f Intelligent rutebygger',
+      feature_builder_desc: 'Tegn ruter med stifesting, terrengbasert ruting utenfor sti og helningsanalyse per segment \u2014 alt i sanntid.',
+      feature_multi_title: '\u26f7\ufe0f Flere aktiviteter',
+      feature_multi_desc: 'Skitur, fottur, l\u00f8ping i fjellet, graveltur \u2014 med aktivitetsspesifikk ruting, forhold og sikkerhetsanalyse.',
+      feature_cabins_title: '\ud83c\udfe0 DNT- og Statskog-hytter',
+      feature_cabins_desc: 'S\u00f8k i 500+ berikede hytteoppf\u00f8ringer med type, operat\u00f8r og bestillingslenker \u2014 planlegg flerdagersturer fra hytte til hytte.',
+      feature_analysis_title: '\ud83d\udcca Turanalyse',
+      feature_analysis_desc: 'Etter turen kan du se ruten du faktisk gikk lagt over planen \u2014 h\u00f8ydeprofil, tempo og terrengfordeling.',
+      feature_share_title: '\ud83d\udc65 Del og samarbeid',
+      feature_share_desc: 'Del ruter med venner, sammenlign turlogger og bygg et delt bibliotek av eventyr p\u00e5 tvers av gruppen.',
+      footer: 'mtnlabs \u00a9 2026',
+    }
+  };
+
+  window.__mtnlabsLang = isNb ? 'nb' : 'en';
+  window.__mtnlabsT = T;
+
+  function applyTranslations() {
+    if (!isNb) return;
+    var strings = T.nb;
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      if (strings[key]) el.textContent = strings[key];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-placeholder');
+      if (strings[key]) el.placeholder = strings[key];
+    });
+    // Update page title and meta
+    document.title = 'mtnlabs.ai \u2014 ' + strings.hero_title;
+    var metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute('content', strings.hero_subtitle);
+    var ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', 'mtnlabs.ai \u2014 ' + strings.hero_title);
+    var ogDesc = document.querySelector('meta[property="og:description"]');
+    if (ogDesc) ogDesc.setAttribute('content', strings.hero_subtitle);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyTranslations);
+  } else {
+    applyTranslations();
+  }
+})();
+</script>
 
 <section class="hero">
   <canvas id="hero-canvas"></canvas>
@@ -269,15 +350,15 @@
     </div>
     <div class="hero-bottom">
       <div class="hero-headline">
-        <h1>Plan your next mountain adventure</h1>
-        <p>AI-powered route planning for the Norwegian wilderness — ski touring, hiking, and more.</p>
+        <h1 data-i18n="hero_title">Plan your next mountain adventure</h1>
+        <p data-i18n="hero_subtitle">AI-powered route planning for the Norwegian wilderness — ski touring, hiking, and more.</p>
       </div>
       <div class="hero-cta">
-        <a href="https://plan.mtnlabs.ai" class="btn btn-primary">
-          Open the planner
+        <a href="https://plan.mtnlabs.ai" class="btn btn-primary" id="cta-planner">
+          <span data-i18n="cta_planner">Open the planner</span>
           <svg width="15" height="15" fill="none"><path d="M3 7.5h9m0 0L8.5 4M12 7.5 8.5 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
-        <a href="https://api.mtnlabs.ai/developer" class="btn btn-ghost">Docs</a>
+        <a href="https://api.mtnlabs.ai/developer" class="btn btn-ghost" data-i18n="cta_docs">Docs</a>
       </div>
     </div>
   </div>
@@ -289,29 +370,30 @@
   <div class="signup-overlay" id="signup-overlay">
     <div class="signup-card">
       <span class="signup-heart">⛰️</span>
-      <h2>Get early access</h2>
-      <p>mtnlabs is a passion project built by outdoors enthusiasts. We're looking for fellow enthusiasts to try the planner, break things, and help shape what it becomes. Sign up, and we'll get back to you as soon as there is an available slot.</p>
+      <h2 data-i18n="signup_title">Get early access</h2>
+      <p data-i18n="signup_desc">mtnlabs is a passion project built by outdoors enthusiasts. We're looking for fellow enthusiasts to try the planner, break things, and help shape what it becomes. Sign up, and we'll get back to you as soon as there is an available slot.</p>
       <form class="signup-form" id="signup-form" onsubmit="return false;">
         <input type="email" id="signup-email" placeholder="your@email.com" required>
-        <input type="text" id="signup-name" placeholder="Name (optional)">
+        <input type="text" id="signup-name" data-i18n-placeholder="name_placeholder" placeholder="Name (optional)">
         <select id="signup-activity">
-          <option value="" disabled selected>What do you enjoy?</option>
-          <option value="hiking">Hiking / trekking</option>
-          <option value="ski">Ski touring</option>
-          <option value="bike">Cycling / gravel</option>
-          <option value="running">Trail running</option>
-          <option value="multi">A bit of everything</option>
+          <option value="" disabled selected data-i18n="activity_prompt">What do you enjoy?</option>
+          <option value="hiking" data-i18n="activity_hiking">Hiking / trekking</option>
+          <option value="ski" data-i18n="activity_ski">Ski touring</option>
+          <option value="bike" data-i18n="activity_bike">Cycling / gravel</option>
+          <option value="running" data-i18n="activity_running">Trail running</option>
+          <option value="multi" data-i18n="activity_multi">A bit of everything</option>
         </select>
-        <textarea id="signup-about" placeholder="Anything you'd like us to know? Favourite areas, what you're looking for, etc." rows="2"></textarea>
-        <button type="submit" id="signup-btn">Join the waitlist</button>
+        <textarea id="signup-about" data-i18n-placeholder="about_placeholder" placeholder="Anything you'd like us to know? Favourite areas, what you're looking for, etc." rows="2"></textarea>
+        <button type="submit" id="signup-btn" data-i18n="signup_btn">Join the waitlist</button>
       </form>
-      <div class="signup-success" id="signup-success">✓ You're on the list! We'll reach out when a spot opens up.</div>
-      <div class="signup-note">We'll only email you when it's your turn. No spam, ever.</div>
+      <div class="signup-error" id="signup-error"></div>
+      <div class="signup-success" id="signup-success" data-i18n="signup_success">&check; You're on the list! We'll reach out when a spot opens up.</div>
+      <div class="signup-note" data-i18n="signup_note">We'll only email you when it's your turn. No spam, ever.</div>
     </div>
   </div>
 
   <div class="sources-bar">
-    <div class="sources-label">Powered by open data from</div>
+    <div class="sources-label" data-i18n="sources_label">Powered by open data from</div>
     <div class="sources-track">
       <span class="source-item"><span class="source-dot"></span>OpenStreetMap</span>
       <span class="source-item"><span class="source-dot"></span>Kartverket</span>
@@ -339,17 +421,17 @@
 </section>
 
 <section class="features">
-  <h2>Built for the Norwegian mountains</h2>
+  <h2 data-i18n="features_title">Built for the Norwegian mountains</h2>
   <div class="features-grid">
-    <div class="feature-card"><h3>🏔️ AI route discovery</h3><p>Ask for a ski tour from Geilo with 1000m gain, a rundtur near Finse, or a gravel ride — the AI finds real trail-matched routes.</p></div>
-    <div class="feature-card"><h3>🗺️ Intelligent route builder</h3><p>Draw routes with on-trail snapping, off-trail terrain routing, and per-segment slope analysis — all in real time.</p></div>
-    <div class="feature-card"><h3>⛷️ Multi-activity</h3><p>Ski touring, hiking, trail running, gravel biking — each with activity-specific routing, conditions, and safety analysis.</p></div>
-    <div class="feature-card"><h3>🏠 DNT & Statskog cabins</h3><p>Search 500+ enriched cabin listings with type, operator, and booking links — plan multi-day hut-to-hut trips.</p></div>
-    <div class="feature-card"><h3>📊 Trip analysis</h3><p>After your trip, see the route you actually took overlaid on the plan — elevation profile, pace, and terrain breakdown.</p></div>
-    <div class="feature-card"><h3>👥 Share &amp; collaborate</h3><p>Share routes with friends, compare trip logs, and build a shared library of adventures across your group.</p></div>
+    <div class="feature-card"><h3 data-i18n="feature_ai_title">🏔️ AI route discovery</h3><p data-i18n="feature_ai_desc">Ask for a ski tour from Geilo with 1000m gain, a rundtur near Finse, or a gravel ride — the AI finds real trail-matched routes.</p></div>
+    <div class="feature-card"><h3 data-i18n="feature_builder_title">🗺️ Intelligent route builder</h3><p data-i18n="feature_builder_desc">Draw routes with on-trail snapping, off-trail terrain routing, and per-segment slope analysis — all in real time.</p></div>
+    <div class="feature-card"><h3 data-i18n="feature_multi_title">⛷️ Multi-activity</h3><p data-i18n="feature_multi_desc">Ski touring, hiking, trail running, gravel biking — each with activity-specific routing, conditions, and safety analysis.</p></div>
+    <div class="feature-card"><h3 data-i18n="feature_cabins_title">🏠 DNT & Statskog cabins</h3><p data-i18n="feature_cabins_desc">Search 500+ enriched cabin listings with type, operator, and booking links — plan multi-day hut-to-hut trips.</p></div>
+    <div class="feature-card"><h3 data-i18n="feature_analysis_title">📊 Trip analysis</h3><p data-i18n="feature_analysis_desc">After your trip, see the route you actually took overlaid on the plan — elevation profile, pace, and terrain breakdown.</p></div>
+    <div class="feature-card"><h3 data-i18n="feature_share_title">👥 Share &amp; collaborate</h3><p data-i18n="feature_share_desc">Share routes with friends, compare trip logs, and build a shared library of adventures across your group.</p></div>
   </div>
 </section>
-<footer class="footer">mtnlabs &copy; 2026</footer>
+<footer class="footer" data-i18n="footer">mtnlabs &copy; 2026</footer>
 
 <script type="module">
 import * as THREE from 'three';
@@ -1676,20 +1758,44 @@ document.getElementById('signup-form')?.addEventListener('submit', async (e) => 
   const activity = document.getElementById('signup-activity')?.value || '';
   const about = document.getElementById('signup-about')?.value || '';
   const btn = document.getElementById('signup-btn');
+  const errorEl = document.getElementById('signup-error');
   if (!email || !btn) return;
 
-  btn.textContent = 'Signing up...';
+  const lang = window.__mtnlabsLang || 'en';
+  const T = window.__mtnlabsT;
+  const submittingText = (lang === 'nb' && T?.nb?.signup_submitting) || 'Signing up...';
+  const errorText = (lang === 'nb' && T?.nb?.signup_error_generic) || 'Something went wrong. Please try again.';
+
+  btn.textContent = submittingText;
   btn.disabled = true;
+  if (errorEl) errorEl.style.display = 'none';
 
-  // Store locally and send to backend when available
   try {
-    const data = { email, name, activity, about, ts: Date.now() };
-    localStorage.setItem('mtnlabs_waitlist', JSON.stringify(data));
-    // TODO: POST to waitlist API endpoint
-  } catch {}
-
-  document.getElementById('signup-form').style.display = 'none';
-  document.getElementById('signup-success').style.display = 'block';
+    const resp = await fetch('/api/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name, activity, about }),
+    });
+    const result = await resp.json();
+    if (result.success) {
+      document.getElementById('signup-form').style.display = 'none';
+      document.getElementById('signup-success').style.display = 'block';
+    } else {
+      if (errorEl) {
+        errorEl.textContent = result.error || errorText;
+        errorEl.style.display = 'block';
+      }
+      btn.textContent = (lang === 'nb' && T?.nb?.signup_btn) || 'Join the waitlist';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    if (errorEl) {
+      errorEl.textContent = errorText;
+      errorEl.style.display = 'block';
+    }
+    btn.textContent = (lang === 'nb' && T?.nb?.signup_btn) || 'Join the waitlist';
+    btn.disabled = false;
+  }
 });
 
 animate();
