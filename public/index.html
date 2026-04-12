@@ -687,8 +687,8 @@ const layerLabels = layerDefs.map((def, i) => {
 
 let layersState = 'waiting';
 let layersTimer = 0;
-const LAYERS_STAGGER = 0.4;  // seconds between each layer appearing
-const LAYERS_HOLD = 1.0;     // seconds all layers visible together
+const LAYERS_STAGGER = 0.5;  // seconds between each layer appearing
+const LAYERS_HOLD = 1.8;     // seconds all layers visible together
 const LAYERS_FADE = 0.8;     // seconds to fade out
 
 // ── Waypoints (as 3D sprites) ──
@@ -799,21 +799,25 @@ const clock = new THREE.Clock();
 // Keyframed route progress: move between waypoints, pause at each one.
 // Each segment: [startTime, endTime] maps to [startFrac, endFrac] of route.
 // Gaps between segments = dwell time at the waypoint.
-const DWELL = 2.0; // seconds to pause at each waypoint
-const MOVE = 3.5;  // seconds to travel between waypoints
+const DWELL_DEFAULT = 2.0; // seconds to pause at most waypoints
+const DWELL_WP2 = 4.0;    // extra time at waypoint 2 (map layers demo)
+const MOVE = 3.5;          // seconds to travel between waypoints
 // Timeline: move → dwell → move → dwell → ...
 // 5 waypoints = 5 moves + 5 dwells = 5*3.5 + 5*2 = 27.5s
 const keyframes = [];
 {
   const fracs = [0, ...wpFracs, 1.0]; // add start and end
+  // Per-waypoint dwell times (index 0 = after first move, etc.)
+  const dwells = [DWELL_DEFAULT, DWELL_WP2, DWELL_DEFAULT, DWELL_DEFAULT, DWELL_DEFAULT];
   let time = 0;
   for (let i = 0; i < fracs.length - 1; i++) {
     const from = fracs[i], to = fracs[i + 1];
     keyframes.push({ t0: time, t1: time + MOVE, f0: from, f1: to });
     time += MOVE;
     if (i < fracs.length - 2) { // dwell at waypoints (not after last)
-      keyframes.push({ t0: time, t1: time + DWELL, f0: to, f1: to }); // hold
-      time += DWELL;
+      const dwell = dwells[i] || DWELL_DEFAULT;
+      keyframes.push({ t0: time, t1: time + dwell, f0: to, f1: to });
+      time += dwell;
     }
   }
   // Override total duration
