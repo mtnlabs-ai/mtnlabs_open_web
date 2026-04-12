@@ -495,10 +495,11 @@ const DEMO_STEPS = 80;
 const demoPts = [];
 for (let i = 0; i <= DEMO_STEPS; i++) {
   const t = i / DEMO_STEPS;
-  // Route curves away from waypoint and back, like a real ski tour
-  const dx = t * 8 - 4;
-  const dz = 2.5 * Math.sin(t * Math.PI) + t * 1.5;
-  const x = wp0Pos.x + dx;
+  // Route curves roughly along the main route direction (camera-visible)
+  // Start slightly before wp0, curve out and come back
+  const dx = t * 6;  // progress along x (same direction as main route)
+  const dz = -2 * Math.sin(t * Math.PI * 1.3); // curve toward camera (negative z)
+  const x = wp0Pos.x - 2 + dx;
   const z = wp0Pos.z + dz;
   const y = terrain(x, z) + 0.12;
   demoPts.push(new THREE.Vector3(x, y, z));
@@ -506,8 +507,15 @@ for (let i = 0; i <= DEMO_STEPS; i++) {
 const demoCurve = new THREE.CatmullRomCurve3(demoPts);
 const demoLinePts = demoCurve.getPoints(120);
 const demoLineGeo = new THREE.BufferGeometry().setFromPoints(demoLinePts);
-const demoLineMat = new THREE.LineBasicMaterial({
+// Glow line behind the main demo line
+const demoGlowMat = new THREE.LineBasicMaterial({
   color: 0x60a5fa, transparent: true, opacity: 0,
+  depthWrite: false,
+});
+demoRouteGroup.add(new THREE.Line(demoLineGeo.clone(), demoGlowMat));
+
+const demoLineMat = new THREE.LineBasicMaterial({
+  color: 0x93c5fd, transparent: true, opacity: 0,
   depthWrite: false,
 });
 demoRouteGroup.add(new THREE.Line(demoLineGeo, demoLineMat));
@@ -826,21 +834,24 @@ function animate() {
 
     if (demoState === 'drawing') {
       const t = Math.min(demoTimer / DEMO_DRAW_TIME, 1);
-      lineOpacity = t * 0.7;
+      lineOpacity = t * 0.9;
       labelOpacity = t;
-      // Progressively reveal the line by rebuilding geometry
+      // Progressively reveal lines by rebuilding geometry
       const showPts = Math.max(2, Math.floor(t * demoLinePts.length));
       const partialGeo = new THREE.BufferGeometry().setFromPoints(demoLinePts.slice(0, showPts));
+      // Update both main line and glow line
       demoRouteGroup.children[0].geometry.dispose();
       demoRouteGroup.children[0].geometry = partialGeo;
+      demoRouteGroup.children[1].geometry.dispose();
+      demoRouteGroup.children[1].geometry = partialGeo.clone();
       if (t >= 1) { demoState = 'visible'; demoTimer = 0; }
     } else if (demoState === 'visible') {
-      lineOpacity = 0.7;
+      lineOpacity = 0.9;
       labelOpacity = 1;
       if (demoTimer >= DEMO_HOLD_TIME) { demoState = 'fading'; demoTimer = 0; }
     } else if (demoState === 'fading') {
       const t = Math.min(demoTimer / DEMO_FADE_TIME, 1);
-      lineOpacity = 0.7 * (1 - t);
+      lineOpacity = 0.9 * (1 - t);
       labelOpacity = 1 - t;
       if (t >= 1) {
         demoState = 'done';
@@ -849,6 +860,7 @@ function animate() {
     }
 
     demoLineMat.opacity = lineOpacity;
+    demoGlowMat.opacity = lineOpacity * 0.3;
     geiloSprite.mat.opacity = labelOpacity;
     kraekjaSprite.mat.opacity = labelOpacity;
   }
