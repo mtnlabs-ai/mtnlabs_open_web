@@ -102,6 +102,84 @@
       font-size: 0.8rem; color: #94a3b8; white-space: nowrap; margin-top: 2px;
     }
 
+    /* ── Signup overlay ── */
+    .signup-overlay {
+      position: absolute; inset: 0; z-index: 20;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none; opacity: 0;
+      transition: opacity 1.2s ease;
+    }
+    .signup-overlay.visible {
+      opacity: 1; pointer-events: auto;
+    }
+    .signup-card {
+      background: rgba(8, 15, 28, 0.92);
+      border: 1px solid rgba(34, 211, 238, 0.2);
+      border-radius: 20px;
+      padding: 2.5rem 2.5rem 2rem;
+      max-width: 440px;
+      width: 90%;
+      text-align: center;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(34,211,238,0.08);
+      transform: translateY(20px);
+      transition: transform 1.2s ease;
+    }
+    .signup-overlay.visible .signup-card {
+      transform: translateY(0);
+    }
+    .signup-card h2 {
+      font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;
+      color: #e2e8f0;
+    }
+    .signup-card .signup-heart {
+      font-size: 1.8rem; margin-bottom: 0.75rem; display: block;
+    }
+    .signup-card p {
+      font-size: 0.92rem; color: #94a3b8; line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    .signup-form {
+      display: flex; gap: 0.5rem; margin-bottom: 1rem;
+    }
+    .signup-form input {
+      flex: 1; padding: 0.7rem 1rem; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.06);
+      color: #e2e8f0; font-size: 0.9rem;
+      outline: none; font-family: inherit;
+      transition: border-color 0.3s;
+    }
+    .signup-form input:focus {
+      border-color: rgba(34,211,238,0.4);
+    }
+    .signup-form input::placeholder { color: rgba(148,163,184,0.5); }
+    .signup-form button {
+      padding: 0.7rem 1.25rem; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #22d3ee, #3b82f6);
+      color: #fff; font-weight: 600; font-size: 0.9rem;
+      cursor: pointer; transition: all 0.25s; font-family: inherit;
+      white-space: nowrap;
+    }
+    .signup-form button:hover {
+      box-shadow: 0 4px 16px rgba(34,211,238,0.3);
+      transform: translateY(-1px);
+    }
+    .signup-note {
+      font-size: 0.78rem; color: #475569;
+    }
+    .signup-or {
+      margin-top: 1rem; font-size: 0.85rem; color: #64748b;
+    }
+    .signup-or a {
+      color: #22d3ee; text-decoration: none;
+    }
+    .signup-or a:hover { text-decoration: underline; }
+    .signup-success {
+      display: none; color: #22c55e; font-size: 0.95rem;
+      font-weight: 500; padding: 0.75rem 0;
+    }
+
     /* ── Data sources ticker ── */
     .sources-bar {
       position: absolute; bottom: 0; left: 0; right: 0; z-index: 4;
@@ -191,6 +269,21 @@
   <div class="wp-hud" id="wp2"><div class="wp-hud-dot"></div><div class="wp-hud-title">Terrain analysis</div><div class="wp-hud-sub">Slope & avalanche</div></div>
   <div class="wp-hud" id="wp3"><div class="wp-hud-dot"></div><div class="wp-hud-title">Analyze your trip</div><div class="wp-hud-sub">Post-trip route review</div></div>
   <div class="wp-hud" id="wp4"><div class="wp-hud-dot"></div><div class="wp-hud-title">Ready to go</div><div class="wp-hud-sub">Export & navigate</div></div>
+  <div class="signup-overlay" id="signup-overlay">
+    <div class="signup-card">
+      <span class="signup-heart">⛰️</span>
+      <h2>Join us on this adventure</h2>
+      <p>mtnlabs is a passion project built by mountain lovers. We're looking for fellow enthusiasts to try the planner, break things, and help shape what it becomes. No cost, no commitment — just honest feedback.</p>
+      <form class="signup-form" id="signup-form" onsubmit="return false;">
+        <input type="email" id="signup-email" placeholder="your@email.com" required>
+        <button type="submit" id="signup-btn">I'm in!</button>
+      </form>
+      <div class="signup-success" id="signup-success">✓ Welcome aboard! We'll be in touch.</div>
+      <div class="signup-note">We'll only email you about access and updates. No spam, ever.</div>
+      <div class="signup-or">or just <a href="https://plan.mtnlabs.ai">jump straight in →</a></div>
+    </div>
+  </div>
+
   <div class="sources-bar">
     <div class="sources-label">Powered by open data from</div>
     <div class="sources-track">
@@ -1528,18 +1621,48 @@ function animate() {
     }
   }
 
-  // Subtle ambient rotation when route is done
+  // When route completes: pull camera up and show signup
   if (progress >= 1) {
-    const orbit = elapsed * 0.05;
-    const cx = headPos.x + Math.cos(orbit) * 12;
-    const cz = headPos.z + Math.sin(orbit) * 12;
-    const cy = headPos.y + 8;
-    camera.position.lerp(new THREE.Vector3(cx, cy, cz), 0.01);
-    camera.lookAt(headPos);
+    const orbit = elapsed * 0.03;
+    const cx = headPos.x + Math.cos(orbit) * 15;
+    const cz = headPos.z + Math.sin(orbit) * 15;
+    const cy = headPos.y + 12;
+    camera.position.lerp(new THREE.Vector3(cx, cy, cz), 0.008);
+    camera.lookAt(new THREE.Vector3(headPos.x, headPos.y - 2, headPos.z));
+
+    // Fade in signup overlay after a short pause
+    if (!signupShown && routeElapsed > TOTAL_KEYFRAME_TIME + 1.5) {
+      document.getElementById('signup-overlay')?.classList.add('visible');
+      signupShown = true;
+    }
   }
 
   renderer.render(scene, camera);
 }
+
+let signupShown = false;
+
+// Signup form handler
+document.getElementById('signup-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('signup-email')?.value;
+  const btn = document.getElementById('signup-btn');
+  if (!email || !btn) return;
+
+  btn.textContent = '...';
+  btn.disabled = true;
+
+  // Store in a simple way — we can connect this to a backend later
+  try {
+    // For now, just store locally and show success
+    // TODO: connect to user-service signup endpoint
+    localStorage.setItem('mtnlabs_signup', JSON.stringify({ email, ts: Date.now() }));
+  } catch {}
+
+  document.getElementById('signup-form').style.display = 'none';
+  document.getElementById('signup-success').style.display = 'block';
+});
+
 animate();
 </script>
 
