@@ -937,6 +937,96 @@ for (let d = 0; d < 3; d++) {
 let itinState = 'waiting';
 let itinTimer = 0;
 
+// ── Device export demo (waypoint 5: "Take it with you") ──
+const devicesGroup = new THREE.Group();
+devicesGroup.visible = false;
+scene.add(devicesGroup);
+
+const wp4Pos = routeCurve.getPoint(0.90);
+
+// Create device feature sprites that float in from different sides
+const deviceDefs = [
+  { label: 'iOS App', icon: '📱', desc: 'Navigate & track', dx: -2.5, dz: -1, dy: 2.5 },
+  { label: 'Apple Watch', icon: '⌚', desc: 'Wrist guidance', dx: 2, dz: -1.5, dy: 2.8 },
+  { label: 'AR View', icon: '👁️', desc: 'See trails in reality', dx: -1, dz: 2, dy: 3.2 },
+  { label: 'HealthKit', icon: '❤️', desc: 'Sync your activity', dx: 2.5, dz: 1.5, dy: 2.2 },
+];
+
+const deviceSprites = deviceDefs.map((def) => {
+  const c = document.createElement('canvas');
+  c.width = 640; c.height = 192;
+  const ctx = c.getContext('2d');
+
+  // Card background
+  const r = 20;
+  ctx.fillStyle = 'rgba(8, 15, 28, 0.88)';
+  ctx.strokeStyle = 'rgba(34, 211, 238, 0.25)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(r, 4); ctx.lineTo(636-r, 4); ctx.arcTo(636, 4, 636, 4+r, r);
+  ctx.lineTo(636, 188-r); ctx.arcTo(636, 188, 636-r, 188, r);
+  ctx.lineTo(r, 188); ctx.arcTo(4, 188, 4, 188-r, r);
+  ctx.lineTo(4, 4+r); ctx.arcTo(4, 4, 4+r, 4, r);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  // Icon
+  ctx.font = '52px sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(def.icon, 28, 96);
+
+  // Label
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '600 40px Inter, sans-serif';
+  ctx.fillText(def.label, 100, 76);
+
+  // Description
+  ctx.fillStyle = '#64748b';
+  ctx.font = '400 30px Inter, sans-serif';
+  ctx.fillText(def.desc, 100, 130);
+
+  const tex = new THREE.CanvasTexture(c);
+  const mat = new THREE.SpriteMaterial({
+    map: tex, transparent: true, opacity: 0,
+    depthTest: false, depthWrite: false,
+  });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(1.8, 0.54, 1);
+  sprite.renderOrder = 998;
+
+  // Start position (far away, will animate in)
+  const targetPos = new THREE.Vector3(
+    wp4Pos.x + def.dx,
+    wp4Pos.y + def.dy,
+    wp4Pos.z + def.dz
+  );
+  const startPos = targetPos.clone().add(
+    new THREE.Vector3(def.dx * 1.5, 2, def.dz * 1.5)
+  );
+  sprite.position.copy(startPos);
+  devicesGroup.add(sprite);
+  return { sprite, mat, startPos, targetPos };
+});
+
+// Export arrow — animated line from route endpoint upward (symbolizing export)
+const arrowPts = [];
+for (let i = 0; i <= 20; i++) {
+  const t = i / 20;
+  arrowPts.push(new THREE.Vector3(
+    wp4Pos.x,
+    wp4Pos.y + 0.3 + t * 2.5,
+    wp4Pos.z
+  ));
+}
+const arrowGeo = new THREE.BufferGeometry().setFromPoints(arrowPts);
+const arrowMat = new THREE.LineBasicMaterial({
+  color: 0x22d3ee, transparent: true, opacity: 0,
+});
+const arrowLine = new THREE.Line(arrowGeo, arrowMat);
+devicesGroup.add(arrowLine);
+
+let devicesState = 'waiting';
+let devicesTimer = 0;
+
 // ── Waypoints (as 3D sprites) ──
 const wpFracs = [0.15, 0.35, 0.55, 0.75, 0.90];
 const wpLabels = [
@@ -944,14 +1034,14 @@ const wpLabels = [
   'Rich map intelligence',
   '900+ huts · 2M trails',
   'Multi-day itineraries',
-  'Share with friends',
+  'Take it with you',
 ];
 const wpSubs = [
   'Just describe what you want',
   'Avalanche · Weather · Terrain · Infrastructure',
   'DNT · Statskog · 45K named routes',
   '"3 dager over Hardangervidda"',
-  'Collaborate on adventures',
+  'iOS · Apple Watch · AR · HealthKit',
 ];
 
 function makeTextSprite(title, subtitle) {
@@ -1050,7 +1140,7 @@ const DWELL_WP2 = 4.0;    // extra time at waypoint 2 (map layers demo)
 const MOVE = 3.5;          // seconds to travel between waypoints
 // Timeline: move → dwell → move → dwell → ...
 // 5 waypoints = 5 moves + 5 dwells = 5*3.5 + 5*2 = 27.5s
-const dwells = [DWELL_DEFAULT, DWELL_WP2, 3.5, 4.0, DWELL_DEFAULT];
+const dwells = [DWELL_DEFAULT, DWELL_WP2, 3.5, 4.0, 3.5];
 const keyframes = [];
 {
   const fracs = [0, ...wpFracs, 1.0]; // add start and end
@@ -1383,6 +1473,59 @@ function animate() {
       if (t >= 1) {
         itinState = 'done';
         itinGroup.visible = false;
+      }
+    }
+  }
+
+  // ── Devices animation (during fifth waypoint dwell) ──
+  const fifthDwellStart = MOVE + dwells[0] + MOVE + dwells[1] + MOVE + dwells[2] + MOVE + dwells[3] + MOVE;
+
+  if (devicesState === 'waiting' && routeElapsed >= fifthDwellStart) {
+    devicesState = 'flying-in';
+    devicesTimer = 0;
+    devicesGroup.visible = true;
+  }
+
+  if (devicesState !== 'waiting' && devicesState !== 'done') {
+    devicesTimer += 0.016;
+
+    if (devicesState === 'flying-in') {
+      // Arrow draws up first
+      const arrowT = Math.min(devicesTimer / 0.5, 1);
+      arrowMat.opacity = arrowT * 0.6;
+
+      // Each device card flies in from its start position with stagger
+      for (let i = 0; i < deviceSprites.length; i++) {
+        const ds = deviceSprites[i];
+        const cardStart = 0.3 + i * 0.35;
+        const t = Math.max(0, Math.min(1, (devicesTimer - cardStart) / 0.6));
+        const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+        ds.sprite.position.lerpVectors(ds.startPos, ds.targetPos, eased);
+        ds.mat.opacity = eased;
+      }
+
+      if (devicesTimer >= 2.2) {
+        devicesState = 'holding';
+        devicesTimer = 0;
+      }
+    } else if (devicesState === 'holding') {
+      // Gentle float animation
+      for (let i = 0; i < deviceSprites.length; i++) {
+        const ds = deviceSprites[i];
+        const float = Math.sin(elapsed * 1.5 + i * 1.2) * 0.08;
+        ds.sprite.position.y = ds.targetPos.y + float;
+      }
+      if (devicesTimer >= 1.5) {
+        devicesState = 'fading';
+        devicesTimer = 0;
+      }
+    } else if (devicesState === 'fading') {
+      const t = Math.min(devicesTimer / 0.8, 1);
+      arrowMat.opacity = 0.6 * (1 - t);
+      for (const ds of deviceSprites) ds.mat.opacity = 1 - t;
+      if (t >= 1) {
+        devicesState = 'done';
+        devicesGroup.visible = false;
       }
     }
   }
