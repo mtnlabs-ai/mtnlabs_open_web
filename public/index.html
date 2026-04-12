@@ -11,6 +11,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.175.0/examples/jsm/"
+    }
+  }
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -19,195 +27,104 @@
       color: #e2e8f0;
       overflow-x: hidden;
     }
-    .hero {
-      position: relative;
-      width: 100%;
-      height: 100vh;
-      min-height: 600px;
-      overflow: hidden;
-    }
-    #hero-canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-    /* Logo + CTA float over the canvas */
+    .hero { position: relative; width: 100%; height: 100vh; min-height: 600px; overflow: hidden; }
+    #hero-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
     .hero-overlay {
-      position: absolute;
-      inset: 0;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      pointer-events: none;
+      position: absolute; inset: 0; z-index: 2;
+      display: flex; flex-direction: column; pointer-events: none;
     }
-    .hero-top {
-      padding: 2.5rem 3rem;
-    }
+    .hero-top { padding: 2.5rem 3rem; }
     .hero-logo {
-      font-size: 1.4rem;
-      font-weight: 700;
-      letter-spacing: -0.01em;
+      font-size: 1.4rem; font-weight: 700; letter-spacing: -0.01em;
       background: linear-gradient(135deg, #22d3ee, #60a5fa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     .hero-bottom {
-      margin-top: auto;
-      padding: 0 3rem 3.5rem;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 2rem;
-      flex-wrap: wrap;
+      margin-top: auto; padding: 0 3rem 3.5rem;
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 2rem; flex-wrap: wrap;
     }
-    .hero-headline {
-      max-width: 480px;
-    }
+    .hero-headline { max-width: 480px; }
     .hero-headline h1 {
-      font-size: 2.8rem;
-      font-weight: 700;
-      line-height: 1.15;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.75rem;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInUp 0.8s ease-out 0.5s forwards;
+      font-size: 2.8rem; font-weight: 700; line-height: 1.15;
+      letter-spacing: -0.02em; margin-bottom: 0.75rem;
+      opacity: 0; transform: translateY(20px);
+      animation: fadeUp 0.8s ease-out 0.5s forwards;
     }
     .hero-headline p {
-      font-size: 1.1rem;
-      font-weight: 300;
-      color: #94a3b8;
-      line-height: 1.5;
-      opacity: 0;
-      animation: fadeInUp 0.8s ease-out 0.8s forwards;
+      font-size: 1.1rem; font-weight: 300; color: #94a3b8; line-height: 1.5;
+      opacity: 0; animation: fadeUp 0.8s ease-out 0.8s forwards;
     }
     .hero-cta {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      opacity: 0;
-      animation: fadeInUp 0.8s ease-out 1.1s forwards;
+      display: flex; gap: 0.75rem; flex-wrap: wrap;
+      opacity: 0; animation: fadeUp 0.8s ease-out 1.1s forwards;
       pointer-events: auto;
     }
     .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.8rem 1.75rem;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.8rem 1.75rem; border-radius: 10px;
+      font-size: 0.95rem; font-weight: 600; text-decoration: none;
       transition: all 0.25s ease;
     }
     .btn-primary {
-      background: linear-gradient(135deg, #22d3ee, #3b82f6);
-      color: #fff;
-      box-shadow: 0 4px 24px rgba(34, 211, 238, 0.25);
+      background: linear-gradient(135deg, #22d3ee, #3b82f6); color: #fff;
+      box-shadow: 0 4px 24px rgba(34,211,238,0.25);
     }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(34, 211, 238, 0.35);
-    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(34,211,238,0.35); }
     .btn-ghost {
-      color: #94a3b8;
-      border: 1px solid rgba(255,255,255,0.1);
+      color: #94a3b8; border: 1px solid rgba(255,255,255,0.1);
       background: rgba(255,255,255,0.04);
     }
     .btn-ghost:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
 
-    @keyframes fadeInUp {
-      to { opacity: 1; transform: translateY(0); }
+    /* Waypoint HUD labels */
+    .wp-hud {
+      position: absolute; z-index: 3; pointer-events: none;
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      text-align: center;
     }
-
-    /* ── Waypoint labels (positioned by JS) ── */
-    .waypoint-label {
-      position: absolute;
-      z-index: 3;
-      pointer-events: none;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
-      white-space: nowrap;
+    .wp-hud.visible { opacity: 1; transform: translateY(0); }
+    .wp-hud-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #22d3ee; box-shadow: 0 0 8px rgba(34,211,238,0.7);
+      margin: 0 auto 4px;
     }
-    .waypoint-label.visible {
-      opacity: 1;
-      transform: translateY(0);
+    .wp-hud-title {
+      font-size: 0.7rem; font-weight: 600; color: #22d3ee;
+      text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap;
     }
-    .waypoint-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: #22d3ee;
-      box-shadow: 0 0 10px rgba(34,211,238,0.6);
-      margin-bottom: 6px;
-    }
-    .waypoint-text {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #22d3ee;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .waypoint-desc {
-      font-size: 0.85rem;
-      color: #cbd5e1;
-      font-weight: 400;
-      margin-top: 2px;
+    .wp-hud-sub {
+      font-size: 0.78rem; color: #94a3b8; white-space: nowrap; margin-top: 1px;
     }
 
-    /* ── Features ── */
     .features {
-      padding: 5rem 2rem 6rem;
-      max-width: 1100px;
-      margin: 0 auto;
+      padding: 5rem 2rem 6rem; max-width: 1100px; margin: 0 auto;
     }
     .features h2 {
-      font-size: 1.8rem;
-      font-weight: 700;
-      text-align: center;
+      font-size: 1.8rem; font-weight: 700; text-align: center;
       margin-bottom: 3rem;
-      color: #e2e8f0;
     }
     .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;
     }
     .feature-card {
-      background: rgba(255,255,255,0.02);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 14px;
-      padding: 1.75rem;
-      transition: all 0.3s ease;
+      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 14px; padding: 1.75rem; transition: all 0.3s ease;
     }
     .feature-card:hover {
-      background: rgba(255,255,255,0.05);
-      border-color: rgba(34,211,238,0.15);
+      background: rgba(255,255,255,0.05); border-color: rgba(34,211,238,0.15);
       transform: translateY(-3px);
     }
-    .feature-card h3 {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 0.4rem;
-    }
-    .feature-card p {
-      font-size: 0.88rem;
-      color: #64748b;
-      line-height: 1.6;
-    }
-    .footer {
-      text-align: center;
-      padding: 2rem;
-      color: #1e293b;
-      font-size: 0.8rem;
-    }
+    .feature-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .feature-card p { font-size: 0.88rem; color: #64748b; line-height: 1.6; }
+    .footer { text-align: center; padding: 2rem; color: #1e293b; font-size: 0.8rem; }
     @media (max-width: 768px) {
       .hero-bottom { flex-direction: column; padding: 0 1.5rem 2.5rem; }
       .hero-top { padding: 1.5rem; }
       .hero-headline h1 { font-size: 2rem; }
-      .waypoint-label { display: none; }
+      .wp-hud { display: none; }
     }
   </style>
 </head>
@@ -215,11 +132,8 @@
 
 <section class="hero">
   <canvas id="hero-canvas"></canvas>
-
   <div class="hero-overlay">
-    <div class="hero-top">
-      <div class="hero-logo">mtnlabs.ai</div>
-    </div>
+    <div class="hero-top"><div class="hero-logo">mtnlabs.ai</div></div>
     <div class="hero-bottom">
       <div class="hero-headline">
         <h1>Plan your next mountain adventure</h1>
@@ -234,357 +148,281 @@
       </div>
     </div>
   </div>
-
-  <!-- Waypoint labels positioned by JS -->
-  <div class="waypoint-label" id="wp0">
-    <div class="waypoint-dot"></div>
-    <div class="waypoint-text">Describe your trip</div>
-    <div class="waypoint-desc">Natural language AI chat</div>
-  </div>
-  <div class="waypoint-label" id="wp1">
-    <div class="waypoint-dot"></div>
-    <div class="waypoint-text">Discover routes</div>
-    <div class="waypoint-desc">Trail-matched suggestions</div>
-  </div>
-  <div class="waypoint-label" id="wp2">
-    <div class="waypoint-dot"></div>
-    <div class="waypoint-text">Terrain analysis</div>
-    <div class="waypoint-desc">Slope, avalanche & weather</div>
-  </div>
-  <div class="waypoint-label" id="wp3">
-    <div class="waypoint-dot"></div>
-    <div class="waypoint-text">DNT cabins</div>
-    <div class="waypoint-desc">Find shelters along the way</div>
-  </div>
-  <div class="waypoint-label" id="wp4">
-    <div class="waypoint-dot"></div>
-    <div class="waypoint-text">Ready to go</div>
-    <div class="waypoint-desc">Export & navigate</div>
-  </div>
+  <div class="wp-hud" id="wp0"><div class="wp-hud-dot"></div><div class="wp-hud-title">Describe your trip</div><div class="wp-hud-sub">Natural language AI</div></div>
+  <div class="wp-hud" id="wp1"><div class="wp-hud-dot"></div><div class="wp-hud-title">Discover routes</div><div class="wp-hud-sub">Trail-matched suggestions</div></div>
+  <div class="wp-hud" id="wp2"><div class="wp-hud-dot"></div><div class="wp-hud-title">Terrain analysis</div><div class="wp-hud-sub">Slope & avalanche</div></div>
+  <div class="wp-hud" id="wp3"><div class="wp-hud-dot"></div><div class="wp-hud-title">DNT cabins</div><div class="wp-hud-sub">Shelters along the way</div></div>
+  <div class="wp-hud" id="wp4"><div class="wp-hud-dot"></div><div class="wp-hud-title">Ready to go</div><div class="wp-hud-sub">Export & navigate</div></div>
 </section>
 
 <section class="features">
   <h2>Built for the Norwegian mountains</h2>
   <div class="features-grid">
-    <div class="feature-card">
-      <h3>🏔️ AI route discovery</h3>
-      <p>Ask for a ski tour from Geilo with 1000m gain, a rundtur near Finse, or a gravel ride — the AI finds real trail-matched routes.</p>
-    </div>
-    <div class="feature-card">
-      <h3>🗺️ Intelligent route builder</h3>
-      <p>Draw routes with on-trail snapping, off-trail terrain routing, and per-segment slope analysis — all in real time.</p>
-    </div>
-    <div class="feature-card">
-      <h3>⛷️ Multi-activity</h3>
-      <p>Ski touring, hiking, trail running, gravel biking — each with activity-specific routing, conditions, and safety analysis.</p>
-    </div>
-    <div class="feature-card">
-      <h3>🏠 DNT & Statskog cabins</h3>
-      <p>Search 500+ enriched cabin listings with type, operator, and booking links — plan multi-day hut-to-hut trips.</p>
-    </div>
-    <div class="feature-card">
-      <h3>🌨️ Weather integration</h3>
-      <p>Real-time MEPS forecasts with temperature, wind, and precipitation grids — see conditions along your route.</p>
-    </div>
-    <div class="feature-card">
-      <h3>⚠️ Safety first</h3>
-      <p>Avalanche zone overlays from varsom.no, slope steepness analysis, and terrain hazard warnings baked into every suggestion.</p>
-    </div>
+    <div class="feature-card"><h3>🏔️ AI route discovery</h3><p>Ask for a ski tour from Geilo with 1000m gain, a rundtur near Finse, or a gravel ride — the AI finds real trail-matched routes.</p></div>
+    <div class="feature-card"><h3>🗺️ Intelligent route builder</h3><p>Draw routes with on-trail snapping, off-trail terrain routing, and per-segment slope analysis — all in real time.</p></div>
+    <div class="feature-card"><h3>⛷️ Multi-activity</h3><p>Ski touring, hiking, trail running, gravel biking — each with activity-specific routing, conditions, and safety analysis.</p></div>
+    <div class="feature-card"><h3>🏠 DNT & Statskog cabins</h3><p>Search 500+ enriched cabin listings with type, operator, and booking links — plan multi-day hut-to-hut trips.</p></div>
+    <div class="feature-card"><h3>🌨️ Weather integration</h3><p>Real-time MEPS forecasts with temperature, wind, and precipitation grids — see conditions along your route.</p></div>
+    <div class="feature-card"><h3>⚠️ Safety first</h3><p>Avalanche zone overlays from varsom.no, slope steepness analysis, and terrain hazard warnings baked into every suggestion.</p></div>
   </div>
 </section>
-
 <footer class="footer">mtnlabs &copy; 2026</footer>
 
-<script>
-// ── "The Route Unfolds" — animated mountain landscape with route line ──
+<script type="module">
+import * as THREE from 'three';
 
-(function() {
-  const canvas = document.getElementById('hero-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
+// ── Config ──
+const GRID = 200;          // terrain grid resolution
+const TERRAIN_SIZE = 60;   // world units
+const ROUTE_DURATION = 12; // seconds for full route
+const ROUTE_DELAY = 1;     // seconds before route starts
+const CONTOUR_INTERVAL = 0.8; // height between contour lines
 
-  let W, H, dpr;
-  let t = 0;
-  let routeProgress = 0; // 0 → 1
-  let routeStarted = false;
-  let routeStartTime = 0;
-  const ROUTE_DURATION = 8000; // ms to draw the full route
-  const ROUTE_DELAY = 600;    // ms before route starts drawing
-
-  // ── Noise ──
-  function hash(x) { const s = Math.sin(x * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
-  function smoothNoise(x) {
-    const i = Math.floor(x), f = x - i;
-    const u = f * f * (3 - 2 * f);
-    return hash(i) * (1 - u) + hash(i + 1) * u;
+// ── Noise ──
+function hash(n) { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+function smooth(x) { const i = Math.floor(x), f = x - i, u = f*f*(3-2*f); return hash(i)*(1-u)+hash(i+1)*u; }
+function fbm(x, y, oct) {
+  let v = 0, a = 0.5, fx = 1, fy = 1;
+  for (let i = 0; i < oct; i++) {
+    v += a * (smooth(x*fx + smooth(y*fy + i*7.3)*2) * 2 - 1);
+    a *= 0.48; fx *= 2.1; fy *= 2.1;
   }
-  function fbm(x, octaves) {
-    let v = 0, a = 0.5, freq = 1;
-    for (let i = 0; i < octaves; i++) { v += a * (smoothNoise(x * freq) * 2 - 1); a *= 0.5; freq *= 2.17; }
-    return v;
-  }
+  return v;
+}
+function terrain(x, z) {
+  return 3.5 * fbm(x*0.12, z*0.12, 6)
+       + 1.5 * Math.abs(fbm(x*0.07 + 5, z*0.07 + 3, 4))
+       + 0.8 * Math.max(0, fbm(x*0.05 + 10, z*0.05 + 8, 5));
+}
 
-  // ── Terrain ──
-  const LAYERS = 4;
-  let ridges = [];
-  let routePath = [];
-  let waypoints = [];
-  let particles = [];
+// ── Setup ──
+const canvas = document.getElementById('hero-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x040810);
 
-  function buildTerrain() {
-    ridges = [];
-    for (let l = 0; l < LAYERS; l++) {
-      const pts = [];
-      const segs = 300;
-      const baseY = H * (0.32 + l * 0.11);
-      const amp = H * (0.20 - l * 0.035);
-      const seed = l * 4.3 + 1.2;
-      for (let i = 0; i <= segs; i++) {
-        const nx = (i / segs) * 5 + seed;
-        const elev = amp * (
-          0.55 * fbm(nx, 6) +
-          0.25 * Math.abs(fbm(nx * 1.3 + 7, 4)) +
-          0.20 * Math.max(0, fbm(nx * 0.6 + 3, 5))
-        );
-        pts.push({ x: (i / segs) * W, y: baseY - elev });
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x040810, 0.025);
+const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
+
+// ── Terrain mesh ──
+const terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, GRID, GRID);
+terrainGeo.rotateX(-Math.PI / 2);
+const pos = terrainGeo.attributes.position;
+for (let i = 0; i < pos.count; i++) {
+  const x = pos.getX(i), z = pos.getZ(i);
+  pos.setY(i, terrain(x, z));
+}
+terrainGeo.computeVertexNormals();
+
+// Terrain material — dark with subtle shading
+const terrainMat = new THREE.MeshStandardMaterial({
+  color: 0x0a1628,
+  roughness: 0.95,
+  metalness: 0.0,
+  wireframe: false,
+  flatShading: false,
+});
+const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+scene.add(terrainMesh);
+
+// ── Contour lines ──
+function buildContourLines() {
+  const halfSize = TERRAIN_SIZE / 2;
+  const step = TERRAIN_SIZE / GRID;
+  const minH = -3, maxH = 8;
+  const contourGroup = new THREE.Group();
+
+  for (let h = minH; h <= maxH; h += CONTOUR_INTERVAL) {
+    const points = [];
+    // March across grid rows to find contour crossings
+    for (let iz = 0; iz < GRID; iz++) {
+      const z = -halfSize + iz * step;
+      let prevH = terrain(-halfSize, z);
+      for (let ix = 1; ix <= GRID; ix++) {
+        const x = -halfSize + ix * step;
+        const curH = terrain(x, z);
+        if ((prevH < h && curH >= h) || (prevH >= h && curH < h)) {
+          // Interpolate crossing position
+          const t = (h - prevH) / (curH - prevH);
+          const cx = x - step * (1 - t);
+          points.push(new THREE.Vector3(cx, h + 0.02, z));
+        }
+        prevH = curH;
       }
-      ridges.push(pts);
     }
-    buildRoute();
-  }
+    if (points.length < 2) continue;
 
-  function sampleRidge(layer, xFrac) {
-    const pts = ridges[layer];
-    const idx = xFrac * (pts.length - 1);
-    const i = Math.floor(idx);
-    const f = idx - i;
-    const a = pts[Math.min(i, pts.length - 1)];
-    const b = pts[Math.min(i + 1, pts.length - 1)];
-    return a.y * (1 - f) + b.y * f;
-  }
-
-  function buildRoute() {
-    routePath = [];
-    const steps = 400;
-    // Route traverses layers 0 and 1, weaving between them
-    for (let i = 0; i <= steps; i++) {
-      const frac = i / steps;
-      const x = W * 0.05 + frac * W * 0.90;
-      // Blend between ridge 0 (peaks) and ridge 1 (mid), creating a path that
-      // goes up to summits and down into valleys
-      const r0 = sampleRidge(0, frac);
-      const r1 = sampleRidge(1, frac);
-      const blend = 0.5 + 0.4 * Math.sin(frac * Math.PI * 3.5 + 0.5);
-      const y = r0 * (1 - blend) + r1 * blend - H * 0.02;
-      routePath.push({ x, y });
+    // Sort points into connected segments by proximity
+    const sorted = [points[0]];
+    const used = new Set([0]);
+    for (let n = 1; n < Math.min(points.length, 500); n++) {
+      const last = sorted[sorted.length - 1];
+      let bestDist = Infinity, bestIdx = -1;
+      for (let j = 0; j < points.length; j++) {
+        if (used.has(j)) continue;
+        const d = last.distanceTo(points[j]);
+        if (d < bestDist && d < step * 3) { bestDist = d; bestIdx = j; }
+      }
+      if (bestIdx < 0) break;
+      sorted.push(points[bestIdx]);
+      used.add(bestIdx);
     }
+    if (sorted.length < 3) continue;
 
-    // Place waypoints along the route
-    const wpFracs = [0.08, 0.28, 0.50, 0.72, 0.92];
-    waypoints = wpFracs.map((f, i) => {
-      const idx = Math.floor(f * steps);
-      const p = routePath[idx];
-      return { x: p.x, y: p.y, frac: f, el: document.getElementById('wp' + i) };
+    const geo = new THREE.BufferGeometry().setFromPoints(sorted);
+    const brightness = 0.06 + (h - minH) / (maxH - minH) * 0.08;
+    const mat = new THREE.LineBasicMaterial({
+      color: new THREE.Color(0.13, 0.52, 0.93),
+      transparent: true,
+      opacity: brightness,
     });
+    contourGroup.add(new THREE.Line(geo, mat));
   }
+  return contourGroup;
+}
+scene.add(buildContourLines());
 
-  function initParticles() {
-    particles = [];
-    for (let i = 0; i < 80; i++) {
-      particles.push({
-        x: Math.random() * W,
-        y: Math.random() * H * 0.65,
-        vx: (Math.random() - 0.5) * 0.15,
-        vy: -Math.random() * 0.15 - 0.03,
-        sz: Math.random() * 1.2 + 0.4,
-        a: Math.random() * 0.25 + 0.05,
-        life: Math.random() * 500,
-      });
-    }
+// ── Lighting ──
+const ambient = new THREE.AmbientLight(0x1a2a4a, 0.6);
+scene.add(ambient);
+const dirLight = new THREE.DirectionalLight(0x4488cc, 0.4);
+dirLight.position.set(10, 15, 5);
+scene.add(dirLight);
+const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.15);
+rimLight.position.set(-5, 3, -10);
+scene.add(rimLight);
+
+// ── Route path ──
+const ROUTE_STEPS = 300;
+const routePts = [];
+for (let i = 0; i <= ROUTE_STEPS; i++) {
+  const t = i / ROUTE_STEPS;
+  // S-curve through the terrain
+  const x = -TERRAIN_SIZE * 0.4 + t * TERRAIN_SIZE * 0.8;
+  const z = 4 * Math.sin(t * Math.PI * 2.5 + 0.3) + (t - 0.5) * 6;
+  const y = terrain(x, z) + 0.15;
+  routePts.push(new THREE.Vector3(x, y, z));
+}
+const routeCurve = new THREE.CatmullRomCurve3(routePts);
+
+// Route line geometry (drawn progressively)
+const routeLineMat = new THREE.LineBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.85, linewidth: 1 });
+const routeGlowMat = new THREE.LineBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.2, linewidth: 1 });
+let routeLine, routeGlow;
+
+function updateRouteLine(progress) {
+  const count = Math.max(2, Math.floor(progress * ROUTE_STEPS));
+  const pts = [];
+  for (let i = 0; i < count; i++) {
+    pts.push(routeCurve.getPoint(i / ROUTE_STEPS));
   }
+  if (routeLine) { scene.remove(routeLine); routeLine.geometry.dispose(); }
+  if (routeGlow) { scene.remove(routeGlow); routeGlow.geometry.dispose(); }
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  routeLine = new THREE.Line(geo, routeLineMat);
+  routeGlow = new THREE.Line(geo.clone(), routeGlowMat);
+  scene.add(routeGlow);
+  scene.add(routeLine);
+}
 
-  function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    W = canvas.clientWidth;
-    H = canvas.clientHeight;
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
-    ctx.scale(dpr, dpr);
-    buildTerrain();
-    initParticles();
-  }
+// Route head (glowing sphere)
+const headGeo = new THREE.SphereGeometry(0.15, 12, 12);
+const headMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
+const headMesh = new THREE.Mesh(headGeo, headMat);
+scene.add(headMesh);
 
-  // ── Drawing ──
-  function drawSky() {
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#040810');
-    g.addColorStop(0.35, '#0a1225');
-    g.addColorStop(0.7, '#0e1a33');
-    g.addColorStop(1, '#060a14');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
+// ── Waypoints ──
+const wpFracs = [0.08, 0.28, 0.50, 0.72, 0.92];
+const wpEls = wpFracs.map((_, i) => document.getElementById('wp' + i));
 
-    // Aurora
-    const ax = W * 0.45 + Math.sin(t * 0.00025) * W * 0.15;
-    const ag = ctx.createRadialGradient(ax, H * 0.1, 0, ax, H * 0.1, W * 0.45);
-    ag.addColorStop(0, `rgba(34,211,238,${0.035 + Math.sin(t * 0.0004) * 0.015})`);
-    ag.addColorStop(0.4, `rgba(96,165,250,${0.015 + Math.sin(t * 0.0006) * 0.008})`);
-    ag.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = ag;
-    ctx.fillRect(0, 0, W, H);
-  }
+function projectToScreen(pos3d, cam, w, h) {
+  const v = pos3d.clone().project(cam);
+  return { x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, behind: v.z > 1 };
+}
 
-  function drawStars() {
-    for (let i = 0; i < 50; i++) {
-      const x = hash(i * 0.13) * W;
-      const y = hash(i * 0.13 + 99) * H * 0.35;
-      const b = 0.15 + 0.25 * Math.sin(t * 0.0008 + i * 1.7);
-      ctx.beginPath();
-      ctx.arc(x, y, hash(i * 0.37) * 1.0 + 0.3, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(190,210,255,${b})`;
-      ctx.fill();
-    }
-  }
+// ── Resize ──
+function onResize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', onResize);
+onResize();
 
-  function drawRidges() {
-    const layerStyles = [
-      { fill: '#0d1830', strokeA: 0.10 },
-      { fill: '#0b1528', strokeA: 0.07 },
-      { fill: '#091220', strokeA: 0.04 },
-      { fill: '#070e1a', strokeA: 0.02 },
-    ];
-    for (let l = LAYERS - 1; l >= 0; l--) {
-      const pts = ridges[l];
-      const s = layerStyles[l];
-      const drift = Math.sin(t * 0.00015 + l * 1.1) * 2;
+// ── Animation loop ──
+let startTime = 0;
+const clock = new THREE.Clock();
 
-      // Fill
-      ctx.beginPath();
-      ctx.moveTo(0, H);
-      for (const p of pts) ctx.lineTo(p.x, p.y + drift);
-      ctx.lineTo(W, H);
-      ctx.closePath();
-      ctx.fillStyle = s.fill;
-      ctx.fill();
+function easeInOut(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
 
-      // Ridge line
-      if (l < 2) {
-        ctx.beginPath();
-        ctx.moveTo(pts[0].x, pts[0].y + drift);
-        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y + drift);
-        ctx.strokeStyle = `rgba(34,211,238,${s.strokeA})`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
+function animate() {
+  requestAnimationFrame(animate);
+  const elapsed = clock.getElapsedTime();
+
+  // Route progress
+  const routeT = Math.max(0, elapsed - ROUTE_DELAY);
+  const rawProgress = Math.min(routeT / ROUTE_DURATION, 1);
+  const progress = easeInOut(rawProgress);
+
+  // Update route line
+  if (progress > 0) updateRouteLine(progress);
+
+  // Head position
+  const headPos = routeCurve.getPoint(Math.min(progress, 0.999));
+  headMesh.position.copy(headPos);
+  headMesh.visible = progress > 0 && progress < 1;
+  // Pulse
+  const pulse = 1 + 0.15 * Math.sin(elapsed * 4);
+  headMesh.scale.setScalar(pulse);
+
+  // Camera: follow from above and behind the route head
+  const camLookAt = headPos.clone();
+  // Get the direction the route is heading
+  const lookAhead = routeCurve.getPoint(Math.min(progress + 0.03, 1));
+  const dir = lookAhead.clone().sub(headPos).normalize();
+  // Camera offset: behind (-dir), above (+y), slightly to the side
+  const camOffset = dir.clone().multiplyScalar(-8)
+    .add(new THREE.Vector3(2, 7, -3));
+
+  const targetCamPos = headPos.clone().add(camOffset);
+
+  // Smooth camera
+  camera.position.lerp(targetCamPos, 0.02);
+  const camTarget = camLookAt.clone().add(new THREE.Vector3(0, 0.5, 0));
+  camera.lookAt(camTarget);
+
+  // Waypoint HUD labels
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  for (let i = 0; i < wpFracs.length; i++) {
+    const el = wpEls[i];
+    if (!el) continue;
+    if (progress >= wpFracs[i]) {
+      el.classList.add('visible');
+      const wp3d = routeCurve.getPoint(wpFracs[i]);
+      wp3d.y += 0.6;
+      const screen = projectToScreen(wp3d, camera, w, h);
+      if (!screen.behind) {
+        el.style.left = screen.x + 'px';
+        el.style.top = (screen.y - 30) + 'px';
       }
     }
   }
 
-  function drawParticles() {
-    for (const p of particles) {
-      p.x += p.vx + Math.sin(t * 0.0007 + p.life) * 0.06;
-      p.y += p.vy;
-      p.life++;
-      if (p.y < -5 || p.x < -5 || p.x > W + 5) {
-        p.x = Math.random() * W;
-        p.y = H * 0.4 + Math.random() * H * 0.35;
-        p.life = 0;
-      }
-      const fade = Math.min(p.life / 60, 1);
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.sz, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(200,220,255,${p.a * fade})`;
-      ctx.fill();
-    }
+  // Subtle ambient rotation when route is done
+  if (progress >= 1) {
+    const orbit = elapsed * 0.05;
+    const cx = headPos.x + Math.cos(orbit) * 12;
+    const cz = headPos.z + Math.sin(orbit) * 12;
+    const cy = headPos.y + 8;
+    camera.position.lerp(new THREE.Vector3(cx, cy, cz), 0.01);
+    camera.lookAt(headPos);
   }
 
-  function drawRoute() {
-    if (routePath.length < 2 || routeProgress <= 0) return;
-    const total = routePath.length - 1;
-    const drawTo = Math.floor(routeProgress * total);
-
-    // Glow
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(routePath[0].x, routePath[0].y);
-    for (let i = 1; i <= drawTo; i++) ctx.lineTo(routePath[i].x, routePath[i].y);
-    ctx.strokeStyle = 'rgba(34,211,238,0.15)';
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.stroke();
-
-    // Main line
-    ctx.beginPath();
-    ctx.moveTo(routePath[0].x, routePath[0].y);
-    for (let i = 1; i <= drawTo; i++) ctx.lineTo(routePath[i].x, routePath[i].y);
-    ctx.strokeStyle = 'rgba(34,211,238,0.7)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Head dot
-    if (drawTo > 0 && routeProgress < 1) {
-      const head = routePath[drawTo];
-      ctx.beginPath();
-      ctx.arc(head.x, head.y, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#22d3ee';
-      ctx.shadowColor = '#22d3ee';
-      ctx.shadowBlur = 12;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    }
-    ctx.restore();
-
-    // Update waypoint labels
-    for (const wp of waypoints) {
-      if (!wp.el) continue;
-      if (routeProgress >= wp.frac) {
-        wp.el.classList.add('visible');
-        // Position above the route point
-        wp.el.style.left = wp.x + 'px';
-        wp.el.style.top = (wp.y - 45) + 'px';
-      }
-    }
-  }
-
-  // ── Loop ──
-  function frame(ts) {
-    t = ts;
-
-    if (!routeStarted) {
-      routeStarted = true;
-      routeStartTime = ts + ROUTE_DELAY;
-    }
-
-    if (ts > routeStartTime) {
-      const elapsed = ts - routeStartTime;
-      // Ease-in-out
-      const raw = Math.min(elapsed / ROUTE_DURATION, 1);
-      routeProgress = raw < 0.5
-        ? 2 * raw * raw
-        : 1 - Math.pow(-2 * raw + 2, 2) / 2;
-    }
-
-    ctx.clearRect(0, 0, W, H);
-    drawSky();
-    drawStars();
-    drawRidges();
-    drawRoute();
-    drawParticles();
-
-    requestAnimationFrame(frame);
-  }
-
-  window.addEventListener('resize', () => {
-    resize();
-    // Reset route animation on resize
-    routeProgress = 0;
-    routeStarted = false;
-    document.querySelectorAll('.waypoint-label').forEach(el => el.classList.remove('visible'));
-  });
-  resize();
-  requestAnimationFrame(frame);
-})();
+  renderer.render(scene, camera);
+}
+animate();
 </script>
 
 </body>
