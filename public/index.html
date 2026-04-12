@@ -989,9 +989,8 @@ function animate() {
 
   // ── Demo route animation (during first waypoint dwell) ──
   // First dwell starts at MOVE seconds (after first move segment: 0 → 0.15)
-  // and lasts DWELL seconds. We trigger the demo during that window.
-  const firstDwellStart = MOVE; // seconds into the route
-  const firstDwellEnd = MOVE + DWELL;
+  const firstDwellStart = MOVE;
+  const firstDwellEnd = MOVE + DWELL_DEFAULT;
   const routeElapsed = Math.max(0, elapsed - ROUTE_DELAY);
 
   if (demoState === 'waiting' && routeElapsed >= firstDwellStart) {
@@ -1040,8 +1039,7 @@ function animate() {
   }
 
   // ── Map layers animation (during second waypoint dwell) ──
-  // Second dwell starts at MOVE + DWELL + MOVE = 9s into route
-  const secondDwellStart = MOVE + DWELL + MOVE;
+  const secondDwellStart = MOVE + dwells[0] + MOVE;
 
   if (layersState === 'waiting' && routeElapsed >= secondDwellStart) {
     layersState = 'staggering';
