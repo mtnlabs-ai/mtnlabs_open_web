@@ -6,8 +6,46 @@
   <title>mtnlabs.ai — Plan your next mountain adventure</title>
   <meta name="description" content="AI-powered route planning for Norwegian mountains. Discover trails, plan ski tours, and explore the wilderness.">
   <meta property="og:title" content="mtnlabs.ai — Plan your next mountain adventure">
-  <meta property="og:description" content="AI-powered route planning for Norwegian mountains">
+  <meta property="og:description" content="AI-powered route planning for Norwegian mountains. Discover trails, plan ski tours, and explore the wilderness.">
   <meta property="og:url" content="https://www.mtnlabs.ai">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="mtnlabs.ai">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="nb_NO">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="mtnlabs.ai — AI-powered route planning">
+  <meta name="twitter:description" content="AI-powered route planning for Norwegian mountains. Ski touring, hiking, trail running, and more.">
+  <link rel="canonical" href="https://www.mtnlabs.ai">
+  <meta name="robots" content="index, follow">
+  <meta name="keywords" content="route planning, Norwegian mountains, ski touring, hiking, trail running, AI, mtnlabs, fjelltur, ruteplanlegging, skitur, fottur">
+  <meta name="author" content="mtnlabs">
+  <meta name="theme-color" content="#080f1c">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "mtnlabs.ai",
+    "url": "https://www.mtnlabs.ai",
+    "description": "AI-powered route planning for Norwegian mountains. Discover trails, plan ski tours, and explore the wilderness.",
+    "applicationCategory": "SportsApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "NOK",
+      "availability": "https://schema.org/PreOrder"
+    },
+    "creator": {
+      "@type": "Organization",
+      "name": "mtnlabs",
+      "url": "https://www.mtnlabs.ai"
+    },
+    "areaServed": {
+      "@type": "Country",
+      "name": "Norway"
+    }
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -36,8 +74,6 @@
     .hero-top { padding: 2.5rem 3rem; }
     .hero-logo {
       display: block; height: 48px; width: auto;
-      filter: invert(1);
-      mix-blend-mode: screen;
     }
     @media (max-width: 768px) {
       .hero-logo { height: 36px; }
@@ -182,13 +218,6 @@
     .signup-note {
       font-size: 0.78rem; color: #475569;
     }
-    .signup-or {
-      margin-top: 1rem; font-size: 0.85rem; color: #64748b;
-    }
-    .signup-or a {
-      color: #22d3ee; text-decoration: none;
-    }
-    .signup-or a:hover { text-decoration: underline; }
     .signup-success {
       display: none; color: #22c55e; font-size: 0.95rem;
       font-weight: 500; padding: 0.75rem 0;
@@ -274,8 +303,6 @@
     nb: {
       hero_title: 'Planlegg ditt neste fjelleventyr',
       hero_subtitle: 'AI-drevet ruteplanlegging for norsk natur \u2014 skitur, fottur og mer.',
-      cta_planner: '\u00c5pne planleggeren',
-      cta_docs: 'Dokumentasjon',
       signup_title: 'F\u00e5 tidlig tilgang',
       signup_desc: 'mtnlabs er et lidenskapsprosjekt bygget av friluftsfolk. Vi leter etter andre entusiaster som vil pr\u00f8ve planleggeren, teste grensene og forme det videre. Registrer deg, s\u00e5 tar vi kontakt n\u00e5r det er en ledig plass.',
       name_placeholder: 'Navn (valgfritt)',
@@ -306,6 +333,16 @@
       feature_analysis_desc: 'Etter turen kan du se ruten du faktisk gikk lagt over planen \u2014 h\u00f8ydeprofil, tempo og terrengfordeling.',
       feature_share_title: '\ud83d\udc65 Del og samarbeid',
       feature_share_desc: 'Del ruter med venner, sammenlign turlogger og bygg et delt bibliotek av eventyr p\u00e5 tvers av gruppen.',
+      wp0_title: 'Beskriv turen din',
+      wp0_sub: 'Naturlig spr\u00e5k-AI',
+      wp1_title: 'Oppdag ruter',
+      wp1_sub: 'Stifestede forslag',
+      wp2_title: 'Terrenganalyse',
+      wp2_sub: 'Helning og skredfare',
+      wp3_title: 'Analyser turen',
+      wp3_sub: 'Etteranalyse av ruten',
+      wp4_title: 'Klar til tur',
+      wp4_sub: 'Eksporter og naviger',
       footer: 'mtnlabs \u00a9 2026',
     }
   };
@@ -354,19 +391,18 @@
         <p data-i18n="hero_subtitle">AI-powered route planning for the Norwegian wilderness — ski touring, hiking, and more.</p>
       </div>
       <div class="hero-cta">
-        <a href="https://plan.mtnlabs.ai" class="btn btn-primary" id="cta-planner">
-          <span data-i18n="cta_planner">Open the planner</span>
+        <a href="#signup-overlay" class="btn btn-primary" id="cta-waitlist" onclick="document.getElementById('signup-overlay').classList.add('visible');return false;">
+          <span data-i18n="signup_btn">Join the waitlist</span>
           <svg width="15" height="15" fill="none"><path d="M3 7.5h9m0 0L8.5 4M12 7.5 8.5 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
-        <a href="https://api.mtnlabs.ai/developer" class="btn btn-ghost" data-i18n="cta_docs">Docs</a>
       </div>
     </div>
   </div>
-  <div class="wp-hud" id="wp0"><div class="wp-hud-dot"></div><div class="wp-hud-title">Describe your trip</div><div class="wp-hud-sub">Natural language AI</div></div>
-  <div class="wp-hud" id="wp1"><div class="wp-hud-dot"></div><div class="wp-hud-title">Discover routes</div><div class="wp-hud-sub">Trail-matched suggestions</div></div>
-  <div class="wp-hud" id="wp2"><div class="wp-hud-dot"></div><div class="wp-hud-title">Terrain analysis</div><div class="wp-hud-sub">Slope & avalanche</div></div>
-  <div class="wp-hud" id="wp3"><div class="wp-hud-dot"></div><div class="wp-hud-title">Analyze your trip</div><div class="wp-hud-sub">Post-trip route review</div></div>
-  <div class="wp-hud" id="wp4"><div class="wp-hud-dot"></div><div class="wp-hud-title">Ready to go</div><div class="wp-hud-sub">Export & navigate</div></div>
+  <div class="wp-hud" id="wp0"><div class="wp-hud-dot"></div><div class="wp-hud-title" data-i18n="wp0_title">Describe your trip</div><div class="wp-hud-sub" data-i18n="wp0_sub">Natural language AI</div></div>
+  <div class="wp-hud" id="wp1"><div class="wp-hud-dot"></div><div class="wp-hud-title" data-i18n="wp1_title">Discover routes</div><div class="wp-hud-sub" data-i18n="wp1_sub">Trail-matched suggestions</div></div>
+  <div class="wp-hud" id="wp2"><div class="wp-hud-dot"></div><div class="wp-hud-title" data-i18n="wp2_title">Terrain analysis</div><div class="wp-hud-sub" data-i18n="wp2_sub">Slope & avalanche</div></div>
+  <div class="wp-hud" id="wp3"><div class="wp-hud-dot"></div><div class="wp-hud-title" data-i18n="wp3_title">Analyze your trip</div><div class="wp-hud-sub" data-i18n="wp3_sub">Post-trip route review</div></div>
+  <div class="wp-hud" id="wp4"><div class="wp-hud-dot"></div><div class="wp-hud-title" data-i18n="wp4_title">Ready to go</div><div class="wp-hud-sub" data-i18n="wp4_sub">Export & navigate</div></div>
   <div class="signup-overlay" id="signup-overlay">
     <div class="signup-card">
       <span class="signup-heart">⛰️</span>

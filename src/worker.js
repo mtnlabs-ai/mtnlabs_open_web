@@ -116,10 +116,7 @@ function buildConfirmationEmail(name) {
         <tr><td style="color:#e2e8f0;font-size:1rem;line-height:1.7;">
           <p style="margin:0 0 16px;">${greeting},</p>
           <p style="margin:0 0 16px;">Thanks for signing up for the mtnlabs waitlist! We're building something we think you'll love \u2014 AI-powered route planning made for the Norwegian mountains.</p>
-          <p style="margin:0 0 16px;">We'll reach out as soon as a spot opens up. In the meantime, you can explore the planner:</p>
-          <p style="text-align:center;margin:24px 0;">
-            <a href="https://plan.mtnlabs.ai" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#22d3ee,#3b82f6);color:#fff;font-weight:600;font-size:0.95rem;text-decoration:none;border-radius:10px;">Open the planner</a>
-          </p>
+          <p style="margin:0 0 16px;">We'll reach out as soon as a spot opens up.</p>
           <p style="margin:0 0 16px;">See you on the trail!</p>
           <p style="margin:0;color:#64748b;">The mtnlabs team</p>
         </td></tr>
