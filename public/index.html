@@ -71,7 +71,10 @@
       position: absolute; inset: 0; z-index: 2;
       display: flex; flex-direction: column; pointer-events: none;
     }
-    .hero-top { padding: 2.5rem 3rem; }
+    .hero-top {
+      position: fixed; top: 0; left: 0; z-index: 50;
+      padding: 2.5rem 3rem;
+    }
     .hero-logo {
       display: block; height: 48px; width: auto;
     }
@@ -285,7 +288,7 @@
     .footer { text-align: center; padding: 2rem; color: #1e293b; font-size: 0.8rem; }
     @media (max-width: 768px) {
       .hero-bottom { flex-direction: column; padding: 0 1.5rem 2.5rem; }
-      .hero-top { padding: 1.5rem; }
+      .hero-top { padding: 1.5rem; top: 0; left: 0; }
       .hero-headline h1 { font-size: 2rem; }
       .wp-hud { display: none; }
     }
@@ -910,10 +913,10 @@ const wp1Pos = routeCurve.getPoint(0.35);
 
 // Layer overlays: colored semi-transparent patches on the terrain
 const layerDefs = [
-  { name: 'Avalanche zones', color: 0xff4444, opacity: 0.25, dx: -2, dz: -1, size: 5 },
-  { name: 'Weather grid', color: 0x44aaff, opacity: 0.15, dx: 1, dz: 2, size: 6 },
-  { name: 'Slope analysis', color: 0xffaa22, opacity: 0.20, dx: -1, dz: 1.5, size: 4 },
-  { name: 'Infrastructure', color: 0x88ff88, opacity: 0.18, dx: 2.5, dz: -0.5, size: 3 },
+  { name: window.__mtnlabsLang === 'nb' ? 'Skredsoner' : 'Avalanche zones', color: 0xff4444, opacity: 0.25, dx: -2, dz: -1, size: 5 },
+  { name: window.__mtnlabsLang === 'nb' ? 'V\u00e6rdata' : 'Weather grid', color: 0x44aaff, opacity: 0.15, dx: 1, dz: 2, size: 6 },
+  { name: window.__mtnlabsLang === 'nb' ? 'Helningsanalyse' : 'Slope analysis', color: 0xffaa22, opacity: 0.20, dx: -1, dz: 1.5, size: 4 },
+  { name: window.__mtnlabsLang === 'nb' ? 'Infrastruktur' : 'Infrastructure', color: 0x88ff88, opacity: 0.18, dx: 2.5, dz: -0.5, size: 3 },
 ];
 
 const layerMeshes = layerDefs.map((def) => {
@@ -1185,10 +1188,10 @@ const wp4Pos = routeCurve.getPoint(0.90);
 
 // Create device feature sprites that float in from different sides
 const deviceDefs = [
-  { label: 'iOS App', icon: '📱', desc: 'Navigate & track', dx: -2.5, dz: -1, dy: 2.5 },
-  { label: 'Apple Watch', icon: '⌚', desc: 'Wrist guidance', dx: 2, dz: -1.5, dy: 2.8 },
-  { label: 'AR View', icon: '👁️', desc: 'See trails in reality', dx: -1, dz: 2, dy: 3.2 },
-  { label: 'HealthKit', icon: '❤️', desc: 'Sync your activity', dx: 2.5, dz: 1.5, dy: 2.2 },
+  { label: 'iOS App', icon: '📱', desc: window.__mtnlabsLang === 'nb' ? 'Naviger og spor' : 'Navigate & track', dx: -2.5, dz: -1, dy: 2.5 },
+  { label: 'Apple Watch', icon: '⌚', desc: window.__mtnlabsLang === 'nb' ? 'Veiledning p\u00e5 h\u00e5ndleddet' : 'Wrist guidance', dx: 2, dz: -1.5, dy: 2.8 },
+  { label: 'AR View', icon: '👁️', desc: window.__mtnlabsLang === 'nb' ? 'Se stier i virkeligheten' : 'See trails in reality', dx: -1, dz: 2, dy: 3.2 },
+  { label: 'HealthKit', icon: '❤️', desc: window.__mtnlabsLang === 'nb' ? 'Synk aktiviteten din' : 'Sync your activity', dx: 2.5, dz: 1.5, dy: 2.2 },
 ];
 
 const deviceSprites = deviceDefs.map((def) => {
@@ -1268,19 +1271,31 @@ let devicesTimer = 0;
 
 // ── Waypoints (as 3D sprites) ──
 const wpFracs = [0.15, 0.35, 0.55, 0.75, 0.90];
-const wpLabels = [
+const wpLabels = window.__mtnlabsLang === 'nb' ? [
+  '\u00abTur over Besseggen\u00bb',
+  'Rik kartintelligens',
+  '900+ hytter \u00b7 2M stier',
+  'Flerdagsturer',
+  'Ta det med deg',
+] : [
   '"Tur over Besseggen"',
   'Rich map intelligence',
-  '900+ huts · 2M trails',
+  '900+ huts \u00b7 2M trails',
   'Multi-day itineraries',
   'Take it with you',
 ];
-const wpSubs = [
+const wpSubs = window.__mtnlabsLang === 'nb' ? [
+  'Bare beskriv hva du \u00f8nsker',
+  'Skred \u00b7 V\u00e6r \u00b7 Terreng \u00b7 Infrastruktur',
+  'DNT \u00b7 Statskog \u00b7 45K navngitte ruter',
+  '\u00ab3 dager over Hardangervidda\u00bb',
+  'iOS \u00b7 Apple Watch \u00b7 AR \u00b7 HealthKit',
+] : [
   'Just describe what you want',
-  'Avalanche · Weather · Terrain · Infrastructure',
-  'DNT · Statskog · 45K named routes',
+  'Avalanche \u00b7 Weather \u00b7 Terrain \u00b7 Infrastructure',
+  'DNT \u00b7 Statskog \u00b7 45K named routes',
   '"3 dager over Hardangervidda"',
-  'iOS · Apple Watch · AR · HealthKit',
+  'iOS \u00b7 Apple Watch \u00b7 AR \u00b7 HealthKit',
 ];
 
 function makeTextSprite(title, subtitle) {
