@@ -551,7 +551,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setClearColor(0x080f1c);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x080f1c, 0.012);
+scene.fog = new THREE.FogExp2(0x080f1c, 0.008);
 const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
 
 // ── Terrain mesh ──
@@ -570,20 +570,20 @@ terrainGeo.computeVertexNormals();
 function lerpC(a, b, t) { return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t]; }
 
 const TOPO_STOPS = [
-  // [height, [r, g, b]]
-  [-0.5,  [0.03, 0.06, 0.16]],  // deep fjord — dark navy
-  [-0.1,  [0.05, 0.10, 0.22]],  // shallow water — blue
-  [ 0.0,  [0.07, 0.14, 0.08]],  // shoreline — dark green
-  [ 0.5,  [0.10, 0.20, 0.08]],  // lowland meadow — rich green
-  [ 1.0,  [0.08, 0.22, 0.06]],  // dense forest — deep green
-  [ 1.8,  [0.12, 0.19, 0.06]],  // upper forest — yellow-green
-  [ 2.5,  [0.16, 0.16, 0.06]],  // treeline — olive/tan
-  [ 3.2,  [0.18, 0.14, 0.08]],  // low alpine — warm brown
-  [ 4.0,  [0.16, 0.14, 0.12]],  // alpine rock — cool grey-brown
-  [ 4.8,  [0.20, 0.19, 0.18]],  // high alpine — light grey
-  [ 5.5,  [0.26, 0.25, 0.24]],  // near summit — pale grey
-  [ 6.2,  [0.35, 0.36, 0.38]],  // snow patches — bright grey
-  [ 7.0,  [0.45, 0.47, 0.52]],  // permanent snow — near white
+  // [height, [r, g, b]] — brightened for better visibility
+  [-0.5,  [0.05, 0.10, 0.25]],  // deep fjord — navy blue
+  [-0.1,  [0.08, 0.16, 0.35]],  // shallow water — blue
+  [ 0.0,  [0.12, 0.24, 0.14]],  // shoreline — dark green
+  [ 0.5,  [0.16, 0.32, 0.14]],  // lowland meadow — rich green
+  [ 1.0,  [0.14, 0.35, 0.12]],  // dense forest — deep green
+  [ 1.8,  [0.20, 0.32, 0.12]],  // upper forest — yellow-green
+  [ 2.5,  [0.28, 0.28, 0.12]],  // treeline — olive/tan
+  [ 3.2,  [0.30, 0.24, 0.14]],  // low alpine — warm brown
+  [ 4.0,  [0.28, 0.24, 0.20]],  // alpine rock — cool grey-brown
+  [ 4.8,  [0.34, 0.32, 0.30]],  // high alpine — light grey
+  [ 5.5,  [0.42, 0.40, 0.38]],  // near summit — pale grey
+  [ 6.2,  [0.52, 0.53, 0.55]],  // snow patches — bright grey
+  [ 7.0,  [0.62, 0.64, 0.68]],  // permanent snow — near white
 ];
 
 function topoColor(h) {
@@ -693,7 +693,7 @@ function buildContourLines() {
 
     // Every 5th contour is a "major" contour (brighter)
     const isMajor = Math.abs(Math.round(h / interval) % 5) === 0;
-    const opacity = isMajor ? 0.30 : 0.12;
+    const opacity = isMajor ? 0.40 : 0.18;
     const lineWidth = 1;
     // Brown contours for land, blue for water level
     const color = h < 0.1
@@ -714,15 +714,15 @@ function buildContourLines() {
 scene.add(buildContourLines());
 
 // ── Lighting ──
-const ambient = new THREE.AmbientLight(0x3a5a8a, 1.2);
+const ambient = new THREE.AmbientLight(0x5a7aaa, 1.8);
 scene.add(ambient);
-const dirLight = new THREE.DirectionalLight(0x6699cc, 1.0);
+const dirLight = new THREE.DirectionalLight(0x88bbee, 1.4);
 dirLight.position.set(10, 20, 5);
 scene.add(dirLight);
-const fillLight = new THREE.DirectionalLight(0x334466, 0.5);
+const fillLight = new THREE.DirectionalLight(0x556688, 0.7);
 fillLight.position.set(-10, 10, -5);
 scene.add(fillLight);
-const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.3);
+const rimLight = new THREE.DirectionalLight(0x22d3ee, 0.4);
 rimLight.position.set(-5, 5, -10);
 scene.add(rimLight);
 
