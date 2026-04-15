@@ -1499,14 +1499,16 @@ function animate() {
   const lookAhead = routeCurve.getPoint(Math.min(progress + 0.03, 1));
   const dir = lookAhead.clone().sub(headPos).normalize();
   // Camera offset: behind (-dir), above (+y), slightly to the side
-  const camOffset = dir.clone().multiplyScalar(-5.5)
-    .add(new THREE.Vector3(1.5, 4.5, -2));
+  const camOffset = dir.clone().multiplyScalar(-8)
+    .add(new THREE.Vector3(2, 7, -3));
 
   const targetCamPos = headPos.clone().add(camOffset);
 
   // Smooth camera
   camera.position.lerp(targetCamPos, 0.03);
-  const camTarget = camLookAt.clone().add(new THREE.Vector3(0, 0.5, 0));
+  // Look ahead of the ball so the route being drawn is centered on screen
+  const lookAheadPt = routeCurve.getPoint(Math.min(progress + 0.12, 1));
+  const camTarget = headPos.clone().lerp(lookAheadPt, 0.6).add(new THREE.Vector3(0, 0.5, 0));
   camera.lookAt(camTarget);
 
   // Waypoint sprites — fade in as route reaches them
