@@ -293,6 +293,12 @@
       .wp-hud { display: none; }
     }
   </style>
+  <!-- Cloudflare Web Analytics -->
+  <!-- The Worker returns its own asset response, so CF's auto-inject of the
+       beacon can't reach this HTML — needs to be in source. Site tag
+       14ce32b3f63a4126985839b814cd6872 (mtnlabs.ai zone, see CF dashboard
+       Web Analytics → Sites). Privacy-respecting: no cookies, no PII. -->
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "cbfd5cfff0d146d2af6eff9d55158d9d"}'></script>
 </head>
 <body>
 <script>
